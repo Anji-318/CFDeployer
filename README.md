@@ -15,8 +15,10 @@ CFDeployer 是一款基于 WPF (.NET) 开发的桌面应用程序，专为简化
 CFDeployer/
 ├── CFDeployer.csproj              # 项目文件
 ├── app.ico                        # 应用程序图标
-├── App.xaml / App.xaml.cs         # 应用程序入口
-├── MainWindow.xaml / .cs          # 主窗口
+├── App.xaml                       # 应用资源字典
+├── App.xaml.cs                    # 应用启动逻辑
+├── MainWindow.xaml                # 主窗口界面
+├── MainWindow.xaml.cs             # 主窗口逻辑
 ├── MainViewModel.cs               # MVVM 视图模型
 ├── app.manifest                   # 应用程序清单
 ├── Models/                        # 数据模型层
@@ -27,10 +29,12 @@ CFDeployer/
 │   ├── WorkerTemplate.cs          # Worker 模板
 │   └── LogEntry.cs                # 日志条目
 ├── Controls/                      # 自定义控件
-│   └── CodeEditor.xaml / .cs      # 代码编辑器控件
+│   ├── CodeEditor.xaml.cs         # 代码编辑器后台
+│   └── CodeEditor.xaml            # 代码编辑器界面
 ├── Dialogs/                       # 对话框
-│   └── ProxyConfigDialog.xaml / .cs   # 代理配置对话框
+│   ├── ProxyConfigDialog.xaml     # 代理配置界面
+│   └── ProxyConfigDialog.xaml.cs  # 代理配置逻辑
 └── Services/                      # 业务服务层
     ├── DeployService.cs           # 部署服务
     └── StorageService.cs          # 存储服务
-```    
+```   
