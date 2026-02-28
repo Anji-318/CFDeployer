@@ -1,115 +1,24 @@
-name: Build & Auto Release
+name: Build
 
-on:
-  push:
-    branches: [main, master]
-    tags: ['v*']
-
-env:
-  PROJECT_NAME: CFDeployer
-  PROJECT_FILE: CFDeployer/CFDeployer.csproj
+on: [push, workflow_dispatch]
 
 jobs:
-  build-and-release:
+  build:
     runs-on: windows-latest
-    
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Get version
-        id: version
-        run: |
-          if ("${{ github.ref_type }}" -eq "tag") {
-            $ver = "${{ github.ref_name }}".TrimStart('v')
-          } else {
-            $ver = "1.0.${{ github.run_number }}-beta"
-          }
-          echo "version=$ver" >> $env:GITHUB_OUTPUT
-          echo "VERSION: $ver"
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-
-      - name: Restore & Build
-        run: |
-          dotnet restore ${{ env.PROJECT_FILE }}
-          dotnet build ${{ env.PROJECT_FILE }} -c Release --no-restore
-
-      - name: Publish x64
-        run: |
-          dotnet publish ${{ env.PROJECT_FILE }} `
-            -c Release -r win-x64 --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:Version=${{ steps.version.outputs.version }} `
-            -o ./publish/x64
-
-      - name: Publish x86
-        run: |
-          dotnet publish ${{ env.PROJECT_FILE }} `
-            -c Release -r win-x86 --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:Version=${{ steps.version.outputs.version }} `
-            -o ./publish/x86
-
-      - name: Create portable packages
-        run: |
-          # x64
-          Compress-Archive -Path ./publish/x64/* -DestinationPath ./${{ env.PROJECT_NAME }}-${{ steps.version.outputs.version }}-x64.zip
-          # x86
-          Compress-Archive -Path ./publish/x86/* -DestinationPath ./${{ env.PROJECT_NAME }}-${{ steps.version.outputs.version }}-x86.zip
-          # Installer (使用 Inno Setup 或 MSI)
-          # iscc setup.iss
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      
+      - run: dotnet restore
+      
+      - run: dotnet build --configuration Release --no-restore
+      
+      - run: dotnet publish -c Release -o ./publish
+      
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.version) }}
-          name: ${{ env.PROJECT_NAME }} ${{ steps.version.outputs.version }}
-          body: |
-            ## 更新内容
-            - 自动构建发布
-            
-            ### 下载
-            - `x64`: 64位系统推荐
-            - `x86`: 32位系统
-            
-            ### 校验
-            ${{ hashFiles('**/*.zip') }}
-          files: |
-            ./${{ env.PROJECT_NAME }}-*-x64.zip
-            ./${{ env.PROJECT_NAME }}-*-x86.zip
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # ===== 自动推送到自建服务器（可选）=====
-      - name: Upload to server
-        if: secrets.UPLOAD_URL != ''
-        run: |
-          curl -X POST "${{ secrets.UPLOAD_URL }}" `
-            -H "Authorization: Bearer ${{ secrets.UPLOAD_TOKEN }}" `
-            -F "file=@./${{ env.PROJECT_NAME }}-${{ steps.version.outputs.version }}-x64.zip" `
-            -F "version=${{ steps.version.outputs.version }}" `
-            -F "channel=stable"
-
-      # ===== 更新自动更新文件（可选）=====
-      - name: Update update.json
-        run: |
-          $update = @{
-            version = "${{ steps.version.outputs.version }}"
-            url = "https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/${{ env.PROJECT_NAME }}-${{ steps.version.outputs.version }}-x64.zip"
-            mandatory = $false
-            changelog = "https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}"
-          } | ConvertTo-Json
-          $update | Out-File -FilePath ./update.json
-          # 推送到 CDN 或 GitHub Pages
-          # git add update.json && git commit -m "update version" && git push
+          name: build-output
+          path: ./publish
