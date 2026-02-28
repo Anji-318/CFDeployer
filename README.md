@@ -10,7 +10,27 @@ CFDeployer 是一款基于 WPF (.NET) 开发的桌面应用程序，专为简化
 | 🌐 代理中转      | 内置代理检测和配置，解决网络访问问题                              |
 | 🎨 主题切换      | 支持深色/浅色主题，适配不同使用环境                              |
 
-[项目结构
-<details>
-<summary>点击查看项目结构</summary>](https://www.kimi.com/chat/19ca3a8c-a662-8103-8000-09f228573a06#%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84%E8%AF%A6%E6%83%85)
-
+项目结构
+```
+CFDeployer/
+├── CFDeployer.csproj              # 项目文件
+├── app.ico                        # 应用程序图标
+├── App.xaml / App.xaml.cs         # 应用程序入口
+├── MainWindow.xaml / .cs          # 主窗口
+├── MainViewModel.cs               # MVVM 视图模型
+├── app.manifest                   # 应用程序清单
+├── Models/                        # 数据模型层
+│   ├── Profile.cs                 # 部署配置档案
+│   ├── DeployJob.cs               # 部署任务
+│   ├── AccountGroup.cs            # 账号分组
+│   ├── AppData.cs                 # 应用数据
+│   ├── WorkerTemplate.cs          # Worker 模板
+│   └── LogEntry.cs                # 日志条目
+├── Controls/                      # 自定义控件
+│   └── CodeEditor.xaml / .cs      # 代码编辑器控件
+├── Dialogs/                       # 对话框
+│   └── ProxyConfigDialog.xaml / .cs   # 代理配置对话框
+└── Services/                      # 业务服务层
+    ├── DeployService.cs           # 部署服务
+    └── StorageService.cs          # 存储服务
+```    
