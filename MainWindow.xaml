@@ -1,0 +1,1425 @@
+<Window x:Class="CFDeployer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Cloudflare Deployer"
+        Height="900" Width="1000"
+        MinHeight="700" MinWidth="1000"
+        Background="{DynamicResource WindowBackground}"
+        WindowStartupLocation="CenterScreen"
+        Icon="/app.ico"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
+    <Window.Resources>
+        <!-- 颜色资源 -->
+        <SolidColorBrush x:Key="Primary" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="Accent" Color="#10B981"/>
+        <SolidColorBrush x:Key="Danger" Color="#EF4444"/>
+        <SolidColorBrush x:Key="Warning" Color="#F59E0B"/>
+       
+        <!-- 深色主题颜色 -->
+        <SolidColorBrush x:Key="WindowBackground" Color="#0F172A"/>
+        <SolidColorBrush x:Key="BgCard" Color="#1E293B"/>
+        <SolidColorBrush x:Key="BgInput" Color="#0F172A"/>
+        <SolidColorBrush x:Key="Border" Color="#334155"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
+        <SolidColorBrush x:Key="InputBackground" Color="#1E293B"/>
+        <SolidColorBrush x:Key="InputForeground" Color="#F1F5F9"/>
+       
+        <!-- 卡片样式 -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BgCard}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="0" BlurRadius="8" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+       
+        <!-- 主要按钮样式 - 绿色渐变橘色 -->
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#10B981" Offset="0"/>
+                        <GradientStop Color="#F59E0B" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+       
+        <!-- 次要按钮样式 -->
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource BgInput}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#334155"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+       
+        <!-- 危险按钮样式（红色）- 保持不变 -->
+        <Style x:Key="DangerButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource Danger}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#DC2626"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+       
+        <!-- 修复：标签页按钮样式 - 增加未选中文本亮度 -->
+<Style x:Key="TabButton" TargetType="ToggleButton">
+    <Setter Property="Background" Value="Transparent"/>
+    <!-- 修复：使用更亮的颜色替代 TextSecondary -->
+    <Setter Property="Foreground" Value="#cbd5e1"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="16,8"/>
+    <Setter Property="FontWeight" Value="Medium"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="ToggleButton">
+                <Border Background="{TemplateBinding Background}"
+                        CornerRadius="8"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}"/>
+                </Border>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+        <Trigger Property="IsChecked" Value="True">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#10B981" Offset="0"/>
+                        <GradientStop Color="#F59E0B" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+        </Trigger>
+        <Trigger Property="IsMouseOver" Value="True">
+            <Setter Property="Background" Value="#334155"/>
+            <Setter Property="Foreground" Value="#f1f5f9"/>
+        </Trigger>
+    </Style.Triggers>
+</Style>
+       
+        <!-- 日志筛选按钮样式 - 绿色渐变橘色 -->
+<Style x:Key="LogFilterButton" TargetType="RadioButton">
+    <Setter Property="Background" Value="{DynamicResource BgInput}"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+    <Setter Property="Padding" Value="12,4"/>
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="RadioButton">
+                <Border x:Name="RootBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="16"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter x:Name="ContentPresenter"
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      TextElement.Foreground="{TemplateBinding Foreground}"/>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <!-- 关键：使用 ControlTemplate.Triggers 而不是 Style.Triggers -->
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="RootBorder" Property="Background">
+                            <Setter.Value>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#10B981" Offset="0"/>
+                                    <GradientStop Color="#F59E0B" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="White"/>
+                        <Setter TargetName="RootBorder" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="RootBorder" Property="Background" Value="#334155"/>
+                        <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource TextPrimary}"/>
+                    </Trigger>
+                    <!-- 关键：确保未选中时恢复颜色 -->
+                    <Trigger Property="IsChecked" Value="False">
+                        <Setter TargetName="RootBorder" Property="Background" Value="{DynamicResource BgInput}"/>
+                        <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource TextSecondary}"/>
+                        <Setter TargetName="RootBorder" Property="BorderBrush" Value="{DynamicResource Border}"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+       
+        <!-- 现代文本框样式 -->
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource InputForeground}"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Hidden"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}" VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+       
+        <!-- 现代密码框样式 -->
+        <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
+            <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource InputForeground}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- 现代复选框样式 - 修复文本模糊问题 -->
+<Style x:Key="ModernCheckBox" TargetType="CheckBox">
+    <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
+    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="12,10"/>
+    <Setter Property="FontSize" Value="14"/>
+    <!-- 关键修复：文本渲染设置 -->
+    <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+    <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+    <Setter Property="UseLayoutRounding" Value="True"/>
+    <Setter Property="SnapsToDevicePixels" Value="True"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="CheckBox">
+                <Border x:Name="MainBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="8"
+                        Padding="{TemplateBinding Padding}"
+                        UseLayoutRounding="True"
+                        SnapsToDevicePixels="True">
+                    <Grid UseLayoutRounding="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- 复选框图标 -->
+                        <Border x:Name="CheckBoxBorder"
+                                Width="18" 
+                                Height="18" 
+                                Background="Transparent" 
+                                BorderBrush="{DynamicResource Border}" 
+                                BorderThickness="2" 
+                                CornerRadius="4"
+                                VerticalAlignment="Center"
+                                UseLayoutRounding="True"
+                                SnapsToDevicePixels="True">
+                            <Path x:Name="CheckMark" 
+                                  Visibility="Collapsed" 
+                                  Data="M 0 7 L 4 11 L 10 3" 
+                                  Stroke="{StaticResource Accent}" 
+                                  StrokeThickness="2.5" 
+                                  Stretch="Uniform"
+                                  Margin="2"
+                                  UseLayoutRounding="True"
+                                  SnapsToDevicePixels="True"/>
+                        </Border>
+                        
+                        <!-- 关键修复：ContentPresenter 不带 TextBlock 附加属性 -->
+                        <ContentPresenter Grid.Column="1" 
+                                          Margin="10,0,0,0" 
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Left"
+                                          RecognizesAccessKey="True"
+                                          TextOptions.TextFormattingMode="Display"
+                                          TextOptions.TextRenderingMode="ClearType"/>
+                    </Grid>
+                </Border>
+                
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                        <Setter TargetName="CheckBoxBorder" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                    </Trigger>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter TargetName="MainBorder" Property="Opacity" Value="0.6"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
+</Style>
+       
+        <!-- 配置项模板 - 修复：添加鼠标点击事件 -->
+        <DataTemplate x:Key="ProfileItemTemplate">
+            <Border Background="Transparent"
+                    BorderBrush="{DynamicResource Border}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="ProfileItem_Select">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding Name}"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"/>
+                        <TextBlock Text="{Binding DisplayInfo}"
+                                   Foreground="{DynamicResource TextMuted}"
+                                   FontSize="12"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="🚀"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="8,4"
+                                Margin="0,0,4,0"
+                                Click="DeployProfile_Click"
+                                Tag="{Binding}"/>
+                        <Button Content="🗑️"
+                                Style="{StaticResource SecondaryButton}"
+                                Padding="8,4"
+                                Click="DeleteProfile_Click"
+                                Tag="{Binding}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+       
+        <!-- 账户组模板 -->
+        <DataTemplate x:Key="AccountGroupTemplate">
+            <Border Background="{DynamicResource BgInput}"
+                    BorderBrush="{DynamicResource Border}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,0,8"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="AccountGroup_Select">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontWeight="SemiBold"/>
+                            <Border Background="{StaticResource Primary}"
+                                    CornerRadius="10"
+                                    Padding="8,2"
+                                    Margin="8,0,0,0">
+                                <TextBlock Text="{Binding Accounts.Count}"
+                                           Foreground="White"
+                                           FontSize="11"/>
+                            </Border>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="删除"
+                                Style="{StaticResource DangerButton}"
+                                Padding="12,4"
+                                Click="DeleteGroup_Click"
+                                Tag="{Binding}"/>
+                    </Grid>
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding AccountsDisplay}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               FontSize="12"
+                               Margin="0,8,0,0"
+                               TextTrimming="CharacterEllipsis"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+       
+        <!-- Worker模板 - 带删除按钮 -->
+<DataTemplate x:Key="WorkerTemplate">
+    <Border Background="{DynamicResource BgInput}"
+            BorderBrush="{DynamicResource Border}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="12"
+            Margin="0,0,0,8"
+            Cursor="Hand"
+            MouseLeftButtonDown="Template_Select">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- 左侧：模板信息（点击选择） -->
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="{Binding Name}"
+                           Foreground="{DynamicResource TextPrimary}"
+                           FontWeight="SemiBold"/>
+                <WrapPanel Margin="0,8,0,0">
+                    <TextBlock Text="变量: "
+                               Foreground="{DynamicResource TextMuted}"
+                               FontSize="11"/>
+                    <TextBlock Text="{Binding VariablesDisplay}"
+                               Foreground="{StaticResource Accent}"
+                               FontSize="11"
+                               FontFamily="Consolas"/>
+                </WrapPanel>
+            </StackPanel>
+            
+            <!-- 右侧：删除按钮 -->
+            <Button Grid.Column="1"
+                    Content="🗑️"
+                    Style="{StaticResource SecondaryButton}"
+                    Padding="8,6"
+                    VerticalAlignment="Center"
+                    Click="DeleteTemplate_Click"
+                    Tag="{Binding}"
+                    ToolTip="删除模板"/>
+        </Grid>
+    </Border>
+</DataTemplate>
+       
+
+        <!-- 日志条目模板 -->
+        <DataTemplate x:Key="LogEntryTemplate">
+            <Border Padding="4,2" Background="Transparent">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Time}"
+                               Foreground="{DynamicResource TextMuted}"
+                               FontSize="11"
+                               FontFamily="Consolas"
+                               Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding Message}"
+                               Foreground="{Binding MessageColor}"
+                               FontSize="12"
+                               TextWrapping="Wrap"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+       
+        <!-- 账户项模板 -->
+        <DataTemplate x:Key="AccountItemTemplate">
+            <Border Background="{DynamicResource BgCard}"
+                    BorderBrush="{DynamicResource Border}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    Margin="0,0,0,12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                   
+                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0"
+                                Background="{StaticResource Primary}"
+                                CornerRadius="4"
+                                Padding="8,4"
+                                Margin="0,0,8,0">
+                            <TextBlock Text="{Binding Label}"
+                                       Foreground="White"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                        <Button Grid.Column="2"
+                                Content="删除"
+                                Style="{StaticResource DangerButton}"
+                                Padding="12,4"
+                                Click="DeleteAccount_Click"
+                                Tag="{Binding}"/>
+                    </Grid>
+                   
+                    <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock Text="账户标识"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ModernTextBox}"/>
+                    </StackPanel>
+                   
+                    <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                        <TextBlock Text="Account ID"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding AccountId, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ModernTextBox}"/>
+                    </StackPanel>
+                   
+                    <StackPanel Grid.Row="3">
+                        <TextBlock Text="API Token"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12"
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding ApiToken, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ModernTextBox}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+       
+        <!-- 环境变量项模板 -->
+        <DataTemplate x:Key="SecretItemTemplate">
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource ModernTextBox}"
+                         Margin="0,0,8,0"
+                         Tag="变量名"/>
+                <TextBox Grid.Column="1"
+                         Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource ModernTextBox}"
+                         Margin="0,0,8,0"
+                         Tag="变量值"/>
+                <Button Grid.Column="2"
+                        Content="🗑️"
+                        Style="{StaticResource SecondaryButton}"
+                        Padding="8,4"
+                        Click="DeleteSecret_Click"
+                        Tag="{Binding}"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- 动态账户卡片样式 - 支持主题切换 -->
+        <Style x:Key="DynamicAccountCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource BgCard}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+
+    </Window.Resources>
+   
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+       
+        <!-- 头部 -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource BgCard}"
+                BorderBrush="{DynamicResource Border}"
+                BorderThickness="0,0,0,1"
+                Padding="20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+               
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+            <Border Width="48" Height="48"
+                    CornerRadius="12"
+                    Margin="0,0,12,0">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#10B981" Offset="0"/>
+                        <GradientStop Color="#F59E0B" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                        <TextBlock Text="🚀"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Cloudflare Deployer"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   FontSize="24"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="多账户批量部署系统 | 矩阵部署 | 代理中转"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="14"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+               
+                <Border Grid.Column="1"
+                        Background="{Binding ProxyStatusBrush}"
+                        CornerRadius="16"
+                        Padding="12,6"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Fill="White" Margin="0,0,8,0"/>
+                        <TextBlock Text="{Binding ProxyStatusText}"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+       
+        <!-- 代理警告/配置 -->
+        <Border Grid.Row="1"
+                Background="{Binding ProxyWarningBrush}"
+                BorderBrush="{Binding ProxyWarningBorder}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="16"
+                Margin="20,16,20,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding ProxyWarningIcon}"
+                           FontSize="24"
+                           Margin="0,0,12,0"/>
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="{Binding ProxyWarningTitle}"
+                               Foreground="{DynamicResource TextPrimary}"
+                               FontWeight="SemiBold"
+                               FontSize="14"/>
+                    <TextBlock Text="{Binding ProxyWarningMessage}"
+                               Foreground="{DynamicResource TextSecondary}"
+                               FontSize="12"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="2"
+                        Content="{Binding ProxyButtonText}"
+                        Style="{StaticResource PrimaryButton}"
+                        Click="OpenProxyConfig_Click"/>
+            </Grid>
+        </Border>
+       
+        <!-- 标签页 -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    Margin="20,16,20,0">
+            <ToggleButton x:Name="TabProfiles"
+                          Content="👤 配置管理"
+                          Style="{StaticResource TabButton}"
+                          IsChecked="True"
+                          Click="Tab_Click"
+                          Tag="Profiles"/>
+            <ToggleButton x:Name="TabAccounts"
+                          Content="👥 账户组"
+                          Style="{StaticResource TabButton}"
+                          Margin="8,0,0,0"
+                          Click="Tab_Click"
+                          Tag="Accounts"/>
+            <ToggleButton x:Name="TabTemplates"
+                          Content="⚙️ Worker模板"
+                          Style="{StaticResource TabButton}"
+                          Margin="8,0,0,0"
+                          Click="Tab_Click"
+                          Tag="Templates"/>
+            <ToggleButton x:Name="TabDeploy"
+                          Content="🚀 部署矩阵"
+                          Style="{StaticResource TabButton}"
+                          Margin="8,0,0,0"
+                          Click="Tab_Click"
+                          Tag="Deploy"/>
+        </StackPanel>
+       
+        <!-- 内容区 -->
+        <Grid Grid.Row="3" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+           
+            <!-- 配置管理标签页 -->
+            <Grid x:Name="PageProfiles" Visibility="Visible">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="350"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+               
+                <!-- 左侧：配置列表 -->
+                <Border Grid.Column="0"
+                        Style="{StaticResource CardStyle}"
+                        Margin="0,0,16,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="⚙️ 独立配置管理"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontWeight="SemiBold"
+                                       FontSize="16"/>
+                            <Button Grid.Column="1"
+                                    Content="+ 新建配置"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Click="CreateProfile_Click"/>
+                        </Grid>
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource BgInput}"
+                                CornerRadius="8"
+                                Padding="4">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="ProfileList"
+                                              ItemTemplate="{StaticResource ProfileItemTemplate}"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Border>
+               
+                <!-- 右侧：配置编辑器 -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                       
+                        <TextBlock Grid.Row="0"
+                                   Text="✏️ 编辑配置"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   Margin="0,0,0,16"/>
+                       
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="配置名称"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <TextBox x:Name="ProfileName"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Margin="0,0,0,16"/>
+                               
+                                <TextBlock Text="Account ID"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <TextBox x:Name="ProfileAccountId"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Margin="0,0,0,16"/>
+                               
+                                <TextBlock Text="API Token"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <Grid Margin="0,0,0,16">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <PasswordBox x:Name="ProfileApiToken"
+                                                 Grid.Column="0"
+                                                 Style="{StaticResource ModernPasswordBox}"
+                                                 PasswordChanged="ProfileApiToken_PasswordChanged"/>
+                                    <TextBox x:Name="ProfileApiTokenVisible"
+                                             Grid.Column="0"
+                                             Style="{StaticResource ModernTextBox}"
+                                             Visibility="Collapsed"
+                                             TextChanged="ProfileApiTokenVisible_TextChanged"/>
+                                    <Button Grid.Column="1"
+                                            x:Name="ToggleTokenBtn"
+                                            Content="👁️"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="8,0,0,0"
+                                            Width="40"
+                                            Click="ToggleTokenVisibility_Click"/>
+                                </Grid>
+                               
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="Worker 名称"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="12"
+                                                   Margin="0,0,0,6"/>
+                                        <TextBox x:Name="ProfileWorkerName"
+                                                 Style="{StaticResource ModernTextBox}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="自定义域名(可选)"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="12"
+                                                   Margin="0,0,0,6"/>
+                                        <TextBox x:Name="ProfileSubdomain"
+                                                 Style="{StaticResource ModernTextBox}"/>
+                                    </StackPanel>
+                                </Grid>
+                               
+                                <!-- 环境变量区域 - 直接展开，移除折叠 -->
+<Border Background="{DynamicResource BgCard}"
+        BorderBrush="{DynamicResource Border}"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="12"
+        Margin="0,16,0,0">
+    <StackPanel>
+        <TextBlock Text="🔐 环境变量"
+                   Foreground="{DynamicResource TextPrimary}"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,12"/>
+        <ItemsControl x:Name="SecretsList"
+                      ItemTemplate="{StaticResource SecretItemTemplate}"/>
+        <Button Content="+ 添加环境变量"
+                Style="{StaticResource SecondaryButton}"
+                HorizontalAlignment="Stretch"
+                Margin="0,8,0,0"
+                Click="AddSecret_Click"/>
+    </StackPanel>
+</Border>
+                               
+                                <TextBlock Text="Worker 代码"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,16,0,6"/>
+                                <TextBox x:Name="ProfileCode"
+                                         Style="{StaticResource ModernTextBox}"
+                                         AcceptsReturn="True"
+                                         AcceptsTab="True"
+                                         FontFamily="Consolas"
+                                         Height="300"
+                                         VerticalScrollBarVisibility="Auto"
+                                         HorizontalScrollBarVisibility="Auto"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                       
+                        <Button Grid.Row="2"
+                                Content="🚀 部署当前配置"
+                                Style="{StaticResource PrimaryButton}"
+                                HorizontalAlignment="Right"
+                                Padding="24,12"
+                                Click="DeployCurrent_Click"/>
+                    </Grid>
+                </Border>
+            </Grid>
+           
+            <!-- 账户组标签页 -->
+            <Grid x:Name="PageAccounts" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="350"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+               
+                <!-- 左侧：账户组列表 -->
+                <Border Grid.Column="0"
+                        Style="{StaticResource CardStyle}"
+                        Margin="0,0,16,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="👥 账户组"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontWeight="SemiBold"
+                                       FontSize="16"/>
+                            <Button Grid.Column="1"
+                                    Content="+ 新建组"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Click="CreateGroup_Click"/>
+                        </Grid>
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource BgInput}"
+                                CornerRadius="8"
+                                Padding="4">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="AccountGroupsList"
+                                              ItemTemplate="{StaticResource AccountGroupTemplate}"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Border>
+               
+                <!-- 右侧：账户组编辑器 -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="✏️ 编辑账户组"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   Margin="0,0,0,16"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="组名称"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <TextBox x:Name="GroupName"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Margin="0,0,0,16"/>
+                               
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="账户列表"
+                                               Foreground="{DynamicResource TextPrimary}"
+                                               FontWeight="SemiBold"/>
+                                    <Button Grid.Column="1"
+                                            Content="+ 添加账户"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Click="AddAccount_Click"/>
+                                </Grid>
+                               
+                                <ItemsControl x:Name="AccountsList"
+                                              ItemTemplate="{StaticResource AccountItemTemplate}"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+           
+            <!-- Worker模板标签页 -->
+            <Grid x:Name="PageTemplates" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="350"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+               
+                <!-- 左侧：模板列表 -->
+                <Border Grid.Column="0"
+                        Style="{StaticResource CardStyle}"
+                        Margin="0,0,16,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="⚙️ Worker 模板"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontWeight="SemiBold"
+                                       FontSize="16"/>
+                            <Button Grid.Column="1"
+                                    Content="+ 新建模板"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Click="CreateTemplate_Click"/>
+                        </Grid>
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource BgInput}"
+                                CornerRadius="8"
+                                Padding="4">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="TemplatesList"
+                                              ItemTemplate="{StaticResource WorkerTemplate}"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Border>
+               
+                <!-- 右侧：模板编辑器 -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="✏️ 编辑模板"
+                                   Foreground="{DynamicResource TextPrimary}"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   Margin="0,0,0,16"/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="模板名称"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <TextBox x:Name="TemplateName"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Margin="0,0,0,16"/>
+                               
+                                <TextBlock Text="Worker 名称模式 (可用变量: region, id等)"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <TextBox x:Name="TemplatePattern"
+                                         Style="{StaticResource ModernTextBox}"
+                                         Margin="0,0,0,16"/>
+                               
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="变量定义"
+                                               Foreground="{DynamicResource TextPrimary}"
+                                               FontWeight="SemiBold"/>
+                                    <Button Grid.Column="1"
+                                            Content="+ 添加变量"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Click="AddVariable_Click"/>
+                                </Grid>
+                                <ItemsControl x:Name="VariablesList" Margin="0,0,0,16"/>
+                               
+                                <TextBlock Text="代码模板"
+                                           Foreground="{DynamicResource TextSecondary}"
+                                           FontSize="12"
+                                           Margin="0,0,0,6"/>
+                                <TextBox x:Name="TemplateCode"
+         Style="{StaticResource ModernTextBox}"
+         AcceptsReturn="True"
+         AcceptsTab="True"
+         FontFamily="Consolas"
+         Height="300"
+         VerticalScrollBarVisibility="Auto"
+         TextChanged="TemplateCode_TextChanged"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+           
+            <!-- 部署矩阵标签页 -->
+            <Grid x:Name="PageDeploy" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+               
+                <!-- 外部滚动条包裹整个内容 -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <!-- 部署配置区域 -->
+                        <Border Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="🚀 部署矩阵配置"
+                                           Foreground="{DynamicResource TextPrimary}"
+                                           FontWeight="SemiBold"
+                                           FontSize="16"
+                                           Margin="0,0,0,16"/>
+                               
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="选择账户组"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="12"
+                                                   Margin="0,0,0,6"/>
+                                        <ComboBox x:Name="DeployGroupCombo"
+                                                  Style="{StaticResource ModernComboBox}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  Tag="-- 选择账户组 --"
+                                                  SelectionChanged="DeployConfig_Changed"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="选择 Worker 模板"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="12"
+                                                   Margin="0,0,0,6"/>
+                                        <ComboBox x:Name="DeployTemplateCombo"
+                                                  Style="{StaticResource ModernComboBox}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  Tag="-- 选择 Worker 模板 --"
+                                                  SelectionChanged="DeployConfig_Changed"/>
+                                    </StackPanel>
+                                </Grid>
+                               
+                                <!-- 变量配置面板 -->
+                                <Border x:Name="VariablesConfigPanel"
+                                        Background="{DynamicResource BgInput}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,16,0,0"
+                                        Visibility="Collapsed"
+                                        MaxHeight="300">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel>
+                                            <TextBlock Text="变量配置"
+                                                       Foreground="{DynamicResource TextPrimary}"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,0,0,12"/>
+                                            <ItemsControl x:Name="DeployVariablesList"/>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
+                               
+                                <!-- 部署矩阵预览区域 - 固定高度 -->
+                                <Border x:Name="MatrixPreviewPanel"
+                                        Background="{DynamicResource BgInput}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,16,0,0"
+                                        Visibility="Collapsed"
+                                        Height="400">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                       
+                                        <!-- 顶部标题 -->
+                                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="部署矩阵预览"
+                                                           Foreground="{DynamicResource TextPrimary}"
+                                                           FontWeight="SemiBold"/>
+                                                <TextBlock x:Name="MatrixCountText"
+                                                           Foreground="{DynamicResource TextSecondary}"
+                                                           FontSize="12"
+                                                           Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <Button Content="全选"
+                                                        Style="{StaticResource SecondaryButton}"
+                                                        Margin="0,0,8,0"
+                                                        Click="SelectAllMatrix_Click"/>
+                                                <Button Content="取消全选"
+                                                        Style="{StaticResource SecondaryButton}"
+                                                        Click="SelectNoneMatrix_Click"/>
+                                            </StackPanel>
+                                        </Grid>
+                                       
+                                        <!-- 矩阵内容 - 固定高度可滚动 -->
+                                        <ScrollViewer Grid.Row="1"
+                                                      VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      Margin="0,0,0,12">
+                                            <WrapPanel x:Name="MatrixItemsPanel"/>
+                                        </ScrollViewer>
+                                       
+                                        <!-- 开始部署按钮 - 红色长条，保持不变 -->
+                                        <Button Grid.Row="2"
+                                                Content="🚀 开始批量部署"
+                                                Style="{StaticResource DangerButton}"
+                                                HorizontalAlignment="Stretch"
+                                                Padding="16"
+                                                FontSize="14"
+                                                FontWeight="Bold"
+                                                Click="StartMatrixDeploy_Click"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                       
+                        <!-- 实时日志面板 -->
+                        <Border Style="{StaticResource CardStyle}"
+                                Margin="0,16,0,0"
+                                Height="400">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                               
+                                <Grid Grid.Row="0" Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock Text="📋 实时日志"
+                                                   Foreground="{DynamicResource TextPrimary}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="16"/>
+                                        <Border Background="{DynamicResource Primary}"
+        Width="22"
+        Height="22"
+        CornerRadius="11"
+        Margin="8,0,0,0">
+    <TextBlock x:Name="LogCountText"
+               Text="0"
+               Foreground="White"
+               FontSize="10"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"/>
+</Border>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="💾 导出"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,8,0"
+                                            Click="ExportLogs_Click"/>
+                                    <Button Grid.Column="2"
+                                            Content="🗑️ 清空"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Click="ClearLogs_Click"/>
+                                </Grid>
+                               
+                                <!-- 日志筛选按钮 -->
+<StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+    <RadioButton GroupName="LogFilterGroup"
+                 Content="全部"
+                 Style="{StaticResource LogFilterButton}"
+                 Click="FilterLogs_Click"
+                 Tag="all"/>
+    <RadioButton GroupName="LogFilterGroup"
+                 Content="信息"
+                 Style="{StaticResource LogFilterButton}"
+                 Margin="8,0,0,0"
+                 Click="FilterLogs_Click"
+                 Tag="info"/>
+    <RadioButton GroupName="LogFilterGroup"
+                 Content="成功"
+                 Style="{StaticResource LogFilterButton}"
+                 Margin="8,0,0,0"
+                 Click="FilterLogs_Click"
+                 Tag="success"/>
+    <RadioButton GroupName="LogFilterGroup"
+                 Content="警告"
+                 Style="{StaticResource LogFilterButton}"
+                 Margin="8,0,0,0"
+                 Click="FilterLogs_Click"
+                 Tag="warning"/>
+    <RadioButton GroupName="LogFilterGroup"
+                 Content="错误"
+                 Style="{StaticResource LogFilterButton}"
+                 Margin="8,0,0,0"
+                 Click="FilterLogs_Click"
+                 Tag="error"/>
+</StackPanel>
+                               
+                                <Border Grid.Row="2"
+                                        Background="{DynamicResource BgInput}"
+                                        BorderBrush="{DynamicResource Border}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                    <Grid>
+                                        <ScrollViewer x:Name="LogsScrollViewer"
+                                                      VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      Margin="8">
+                                            <ItemsControl x:Name="LogsItemsControl"
+                                                          ItemTemplate="{StaticResource LogEntryTemplate}"/>
+                                        </ScrollViewer>
+                                        <TextBlock x:Name="EmptyLogText"
+                                                   Text="暂无日志消息..."
+                                                   Foreground="{DynamicResource TextMuted}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+       
+        <!-- 状态栏 -->
+        <Border Grid.Row="4"
+                Background="{DynamicResource BgCard}"
+                BorderBrush="{DynamicResource Border}"
+                BorderThickness="0,1,0,0"
+                Padding="20,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+               
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8"
+                             Fill="{Binding StatusColor}"
+                             Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding StatusText}"
+                               Foreground="{DynamicResource TextSecondary}"/>
+                </StackPanel>
+               
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal">
+                    <Button x:Name="ThemeToggleBtn"
+                            Content="{Binding ThemeButtonContent}"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,8,0"
+                            Click="ToggleTheme_Click"
+                            ToolTip="切换主题"/>
+                   
+                    <Button Content="📤 导出"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,8,0"
+                            Click="Export_Click"/>
+                    <Button Content="📥 导入"
+                            Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,8,0"
+                            Click="Import_Click"/>
+                    <Button Content="🗑️ 重置"
+                            Style="{StaticResource DangerButton}"
+                            Margin="0,0,8,0"
+                            Click="Reset_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
