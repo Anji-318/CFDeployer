@@ -9,7 +9,10 @@ CFDeployer 是一款基于 WPF (.NET) 开发的桌面应用程序，专为简化
 | 🚀 矩阵部署      | 基于模板变量组合，批量生成并部署多个 Worker 实例                    |
 | 🌐 代理中转      | 内置代理检测和配置，解决网络访问问题                              |
 | 🎨 主题切换      | 支持深色/浅色主题，适配不同使用环境                              |
+
 项目结构
+<details>
+<summary>点击查看项目结构</summary>
 CFDeployer/
 ├── CFDeployer.csproj              # 项目文件
 ├── app.ico                        # 应用程序图标
@@ -31,3 +34,4 @@ CFDeployer/
 └── Services/                      # 业务服务层
     ├── DeployService.cs           # 部署服务
     └── StorageService.cs          # 存储服务
+</details>
