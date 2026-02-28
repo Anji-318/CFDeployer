@@ -12,13 +12,13 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       
-      - run: dotnet restore
+      - run: dotnet restore CFDeployer.csproj
       
-      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet build CFDeployer.csproj -c Release --no-restore
       
-      - run: dotnet publish -c Release -o ./publish
+      - run: dotnet publish CFDeployer.csproj -c Release -o ./publish --no-build
       
       - uses: actions/upload-artifact@v4
         with:
-          name: build-output
+          name: CFDeployer
           path: ./publish
