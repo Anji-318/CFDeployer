@@ -37,6 +37,15 @@ namespace CFDeployer
         // 添加日志筛选字段
         private string _currentLogFilter = "all";
         private ObservableCollection<LogEntry> _allLogs = new();
+
+        // ===== 代码处理相关字段 =====
+        private WorkerCodeProcessor _codeProcessor = new WorkerCodeProcessor();
+        private ContextMenu _profileDecodeMenu = null!;
+        private ContextMenu _profileObfuscateMenu = null!;
+        private ContextMenu _profileFormatMenu = null!;
+        private ContextMenu _templateDecodeMenu = null!;
+        private ContextMenu _templateObfuscateMenu = null!;
+        private ContextMenu _templateFormatMenu = null!;
         
         public event PropertyChangedEventHandler? PropertyChanged;
         
@@ -69,7 +78,7 @@ namespace CFDeployer
             get => _isDeploying; 
             set 
             { 
-                _isDeploying = value; 
+                _isUpdatingToken = value; 
                 OnPropertyChanged(nameof(IsDeploying));
                 UpdateStatus();
             }
@@ -155,6 +164,9 @@ namespace CFDeployer
             SubscribeTemplateEditorEvents();
             
             AddLog("应用已启动", "success");
+
+            // 初始化代码菜单（必须在UI加载完成后）
+            InitializeCodeMenus();
         }
         
         private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -245,6 +257,361 @@ namespace CFDeployer
             }
         }
         #endregion
+
+        #region 代码工具按钮功能
+
+        private void InitializeCodeMenus()
+        {
+            // Profile 代码菜单
+            _profileDecodeMenu = new ContextMenu();
+            AddMenuItem(_profileDecodeMenu, "🔓 Base64 解码", () => ApplyToProfileCode(_codeProcessor.DecodeBase64));
+            AddMenuItem(_profileDecodeMenu, "🔓 Unicode 解码", () => ApplyToProfileCode(_codeProcessor.DecodeUnicode));
+            AddMenuItem(_profileDecodeMenu, "🔓 十六进制解码", () => ApplyToProfileCode(_codeProcessor.DecodeHex));
+            _profileDecodeMenu.Items.Add(new Separator());
+            AddMenuItem(_profileDecodeMenu, "✨ 智能反混淆", () => ApplyToProfileCode(_codeProcessor.Deobfuscate));
+
+            _profileObfuscateMenu = new ContextMenu();
+            AddMenuItem(_profileObfuscateMenu, "🔒 轻度混淆", () => ApplyToProfileCode(_codeProcessor.ObfuscateLight));
+            AddMenuItem(_profileObfuscateMenu, "🔒 中度混淆", () => ApplyToProfileCode(_codeProcessor.ObfuscateMedium));
+
+            _profileFormatMenu = new ContextMenu();
+            AddMenuItem(_profileFormatMenu, "📝 格式化代码", () => ApplyToProfileCode(_codeProcessor.Format));
+            AddMenuItem(_profileFormatMenu, "📦 压缩代码", () => ApplyToProfileCode(_codeProcessor.Minify));
+
+            // Template 代码菜单
+            _templateDecodeMenu = new ContextMenu();
+            AddMenuItem(_templateDecodeMenu, "🔓 Base64 解码", () => ApplyToTemplateCode(_codeProcessor.DecodeBase64));
+            AddMenuItem(_templateDecodeMenu, "🔓 Unicode 解码", () => ApplyToTemplateCode(_codeProcessor.DecodeUnicode));
+            AddMenuItem(_templateDecodeMenu, "✨ 智能反混淆", () => ApplyToTemplateCode(_codeProcessor.Deobfuscate));
+
+            _templateObfuscateMenu = new ContextMenu();
+            AddMenuItem(_templateObfuscateMenu, "🔒 轻度混淆", () => ApplyToTemplateCode(_codeProcessor.ObfuscateLight));
+            AddMenuItem(_templateObfuscateMenu, "🔒 中度混淆", () => ApplyToTemplateCode(_codeProcessor.ObfuscateMedium));
+
+            _templateFormatMenu = new ContextMenu();
+            AddMenuItem(_templateFormatMenu, "📝 格式化代码", () => ApplyToTemplateCode(_codeProcessor.Format));
+            AddMenuItem(_templateFormatMenu, "📦 压缩代码", () => ApplyToTemplateCode(_codeProcessor.Minify));
+        }
+
+        private void AddMenuItem(ContextMenu menu, string header, Action action)
+        {
+            var item = new MenuItem { Header = header };
+            item.Click += (s, e) => action();
+            menu.Items.Add(item);
+        }
+
+        private void ApplyToProfileCode(Func<string, string> transform)
+        {
+            try
+            {
+                ProfileCode.Text = transform(ProfileCode.Text);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"操作失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ApplyToTemplateCode(Func<string, string> transform)
+        {
+            try
+            {
+                TemplateCode.Text = transform(TemplateCode.Text);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"操作失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ShowMenu(ContextMenu menu, Button? button)
+{
+    if (button == null) return;
+    menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+    menu.PlacementTarget = button;
+    menu.IsOpen = true;
+}
+
+                // ========== Profile 代码按钮事件 ==========
+
+                private void ProfileAnalyzeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var code = ProfileCode.Text;
+            var result = WorkerCodeAnalyzer.Analyze(code);
+            
+            // 输出分析结果到日志
+            AddLog($"📊 代码分析 - 总行数:{result.TotalLines} 代码行:{result.CodeLines} 复杂度:{result.Complexity}", "info");
+            
+            if (result.DetectedPatterns.Any())
+            {
+                AddLog($"🔍 检测到模式: {string.Join(", ", result.DetectedPatterns)}", "debug");
+            }
+            
+            if (result.Suggestions.Any())
+            {
+                foreach (var suggestion in result.Suggestions)
+                {
+                    AddLog($"💡 {suggestion}", "warning");
+                }
+            }
+            else
+            {
+                AddLog("✅ 代码结构良好，暂无建议", "success");
+            }
+            
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("📊 代码分析报告");
+            sb.AppendLine(new string('=', 30));
+            sb.AppendLine($"总行数: {result.TotalLines}");
+            sb.AppendLine($"代码行: {result.CodeLines}");
+            sb.AppendLine($"注释行: {result.CommentLines}");
+            sb.AppendLine($"空行: {result.EmptyLines}");
+            sb.AppendLine($"复杂度: {result.Complexity}");
+            sb.AppendLine();
+            
+            if (result.DetectedPatterns.Any())
+            {
+                sb.AppendLine("🔍 检测到的模式:");
+                foreach (var pattern in result.DetectedPatterns)
+                    sb.AppendLine($"  • {pattern}");
+                sb.AppendLine();
+            }
+            
+            if (result.Suggestions.Any())
+            {
+                sb.AppendLine("💡 建议:");
+                foreach (var suggestion in result.Suggestions)
+                    sb.AppendLine($"  • {suggestion}");
+            }
+            else
+            {
+                sb.AppendLine("✅ 代码结构良好，暂无建议");
+            }
+
+            MessageBox.Show(sb.ToString(), "代码分析结果", MessageBoxButton.OK, MessageBoxImage.Information);
+            AddLog("已完成代码分析", "success");
+        }
+
+        private void ProfileDecodeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMenu(_profileDecodeMenu, sender as Button);
+        }
+
+        private void ProfileObfuscateBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMenu(_profileObfuscateMenu, sender as Button);
+        }
+
+        private void ProfileFormatBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMenu(_profileFormatMenu, sender as Button);
+        }
+
+        // ========== Template 代码按钮事件 ==========
+
+                private void TemplateAnalyzeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var code = TemplateCode.Text;
+            var result = WorkerCodeAnalyzer.Analyze(code);
+            
+            // 输出分析结果到日志
+            AddLog($"📊 代码模板分析 - 总行数:{result.TotalLines} 代码行:{result.CodeLines} 复杂度:{result.Complexity}", "info");
+            
+            // 检查模板变量
+            var varMatches = System.Text.RegularExpressions.Regex.Matches(code, @"\{\{(\w+)\}\}");
+            var vars = varMatches.Select(m => m.Groups[1].Value).Distinct().ToList();
+            if (vars.Any())
+            {
+                AddLog($"📝 模板变量: {string.Join(", ", vars.Select(v => $"{{{{{v}}}}}"))}", "debug");
+            }
+            
+            if (result.DetectedPatterns.Any())
+            {
+                AddLog($"🔍 检测到模式: {string.Join(", ", result.DetectedPatterns)}", "debug");
+            }
+            
+            if (result.Suggestions.Any())
+            {
+                foreach (var suggestion in result.Suggestions)
+                {
+                    AddLog($"💡 {suggestion}", "warning");
+                }
+            }
+            else
+            {
+                AddLog("✅ 模板结构良好，暂无建议", "success");
+            }
+            
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("📊 代码模板分析报告");
+            sb.AppendLine(new string('=', 30));
+            sb.AppendLine($"总行数: {result.TotalLines}");
+            sb.AppendLine($"代码行: {result.CodeLines}");
+            sb.AppendLine($"注释行: {result.CommentLines}");
+            sb.AppendLine($"空行: {result.EmptyLines}");
+            sb.AppendLine($"复杂度: {result.Complexity}");
+            sb.AppendLine();
+            
+            if (result.DetectedPatterns.Any())
+            {
+                sb.AppendLine("🔍 检测到的模式:");
+                foreach (var pattern in result.DetectedPatterns)
+                    sb.AppendLine($"  • {pattern}");
+                sb.AppendLine();
+            }
+            
+            if (vars.Any())
+            {
+                sb.AppendLine("📝 模板变量:");
+                foreach (var v in vars)
+                    sb.AppendLine($"  • {{{{{v}}}}}");
+                sb.AppendLine();
+            }
+            
+            if (result.Suggestions.Any())
+            {
+                sb.AppendLine("💡 建议:");
+                foreach (var suggestion in result.Suggestions)
+                    sb.AppendLine($"  • {suggestion}");
+            }
+            else
+            {
+                sb.AppendLine("✅ 模板结构良好，暂无建议");
+            }
+
+            MessageBox.Show(sb.ToString(), "代码模板分析结果", MessageBoxButton.OK, MessageBoxImage.Information);
+            AddLog("已完成代码模板分析", "success");
+        }
+
+        private void TemplateDecodeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMenu(_templateDecodeMenu, sender as Button);
+        }
+
+        private void TemplateObfuscateBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMenu(_templateObfuscateMenu, sender as Button);
+        }
+
+        private void TemplateFormatBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowMenu(_templateFormatMenu, sender as Button);
+        }
+
+        private void VersionText_Click(object sender, MouseButtonEventArgs e)
+        {
+            var aboutWindow = new Window
+            {
+                Title = "关于 Cloudflare Deployer",
+                Width = 420,
+                Height = 320,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                Background = IsDarkMode ? new SolidColorBrush(Color.FromRgb(15, 23, 42)) : new SolidColorBrush(Color.FromRgb(241, 245, 249)),
+                ResizeMode = ResizeMode.NoResize
+            };
+
+            var grid = new Grid { Margin = new Thickness(24) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+
+            // 标题
+            var title = new TextBlock
+            {
+                Text = "Cloudflare Deployer",
+                FontSize = 20,
+                FontWeight = FontWeights.Bold,
+                Foreground = IsDarkMode ? new SolidColorBrush(Color.FromRgb(248, 250, 252)) : new SolidColorBrush(Color.FromRgb(30, 41, 59))
+            };
+            Grid.SetRow(title, 0);
+
+            // 版本号
+            var version = new TextBlock
+            {
+                Text = "版本: v1.0.1",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                Margin = new Thickness(0, 8, 0, 0)
+            };
+            Grid.SetRow(version, 1);
+
+            // 简介
+            var desc = new TextBlock
+            {
+                Text = "多账户批量部署系统，支持矩阵部署、代理中转、代码处理等功能。",
+                FontSize = 13,
+                Foreground = IsDarkMode ? new SolidColorBrush(Color.FromRgb(148, 163, 184)) : new SolidColorBrush(Color.FromRgb(71, 85, 105)),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 16, 0, 0)
+            };
+            Grid.SetRow(desc, 2);
+
+            // 更新简介
+            var updateTitle = new TextBlock
+            {
+                Text = "v1.0.1 更新内容:",
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = IsDarkMode ? new SolidColorBrush(Color.FromRgb(248, 250, 252)) : new SolidColorBrush(Color.FromRgb(30, 41, 59)),
+                Margin = new Thickness(0, 16, 0, 4)
+            };
+            Grid.SetRow(updateTitle, 3);
+
+            var updateContent = new TextBlock
+            {
+                Text = "• 新增代码分析、解码、混淆、格式化功能\n• 支持 Worker 模板变量替换\n• 优化日志筛选与导出功能",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                TextWrapping = TextWrapping.Wrap
+            };
+            Grid.SetRow(updateContent, 4);
+
+            // 项目地址链接
+            var linkPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 16, 0, 0) };
+            var linkText = new TextBlock
+            {
+                Text = "项目地址",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246)),
+                TextDecorations = TextDecorations.Underline,
+                Cursor = Cursors.Hand
+            };
+            linkText.MouseLeftButtonDown += (s, ev) =>
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://github.com/Anji-318/CFDeployer",
+                    UseShellExecute = true
+                });
+            };
+            linkPanel.Children.Add(linkText);
+            linkPanel.Children.Add(new TextBlock 
+            { 
+                Text = " →", 
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(59, 130, 246))
+            });
+            Grid.SetRow(linkPanel, 5);
+            linkPanel.VerticalAlignment = VerticalAlignment.Bottom;
+
+            grid.Children.Add(title);
+            grid.Children.Add(version);
+            grid.Children.Add(desc);
+            grid.Children.Add(updateTitle);
+            grid.Children.Add(updateContent);
+            grid.Children.Add(linkPanel);
+
+            aboutWindow.Content = grid;
+            aboutWindow.ShowDialog();
+            
+            AddLog("打开关于窗口", "debug");
+        }
+
+        #endregion
         
         private void LoadData()
         {
@@ -290,7 +657,8 @@ namespace CFDeployer
                             WorkerNamePattern = "demo-worker-{{region}}",
                             Variables = new List<string> { "region" },
                             Code = GetDefaultWorkerCode(),
-                            Secrets = new List<SecretTemplate>()
+                            Secrets = new List<SecretTemplate>(),
+                            EnvironmentVariables = new List<SecretTemplate>()
                         });
                     }
                     
@@ -646,7 +1014,10 @@ namespace CFDeployer
         {
             Id = Guid.NewGuid().ToString(),
             Name = $"新配置 {Profiles.Count + 1}",
-            Code = GetDefaultWorkerCode()
+            Code = GetDefaultWorkerCode(),
+            Secrets = new List<Secret>(),
+            EnvironmentVariables = new List<Secret>(),
+            Routes = new List<Route>()
         };
         Profiles.Add(profile);
         SelectProfile(profile);
@@ -701,8 +1072,13 @@ private void SelectProfile(Profile profile)
         ProfileSubdomain.Text = profile.Subdomain ?? "";
         ProfileCode.Text = profile.Code ?? GetDefaultWorkerCode();
         
+        // 刷新 Secrets 列表
         SecretsList.ItemsSource = null;
         SecretsList.ItemsSource = profile.Secrets;
+        
+        // 刷新环境变量列表
+        ProfileEnvVarsList.ItemsSource = null;
+        ProfileEnvVarsList.ItemsSource = profile.EnvironmentVariables;
         
         // 关键修复：订阅所有输入框的变化事件，实现实时保存
         SubscribeProfileEvents();
@@ -838,6 +1214,8 @@ private void DeleteProfile_Click(object sender, RoutedEventArgs e)
                     ProfileWorkerName.Text = "";
                     ProfileSubdomain.Text = "";
                     ProfileCode.Text = "";
+                    SecretsList.ItemsSource = null;
+                    ProfileEnvVarsList.ItemsSource = null;
                 }
                 SaveData();
                 RefreshUI();
@@ -925,7 +1303,36 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                 _currentProfile.Secrets.Add(new Secret { Key = "", Value = "" });
                 SecretsList.ItemsSource = null;
                 SecretsList.ItemsSource = _currentProfile.Secrets;
-                AddLog("添加环境变量", "debug");
+                SaveData();
+                AddLog("添加 Secret", "debug");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"添加 Secret 失败: {ex.Message}", "error");
+            }
+        }
+
+        // 新增：添加 Profile 环境变量
+        private void AddProfileEnvVar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_currentProfile == null)
+                {
+                    MessageBox.Show("请先选择一个配置", "提示", 
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                _currentProfile.EnvironmentVariables.Add(new Secret 
+                { 
+                    Key = "VAR_NAME", 
+                    Value = "" 
+                });
+                ProfileEnvVarsList.ItemsSource = null;
+                ProfileEnvVarsList.ItemsSource = _currentProfile.EnvironmentVariables;
+                SaveData();
+                AddLog("添加环境变量到配置", "debug");
             }
             catch (Exception ex)
             {
@@ -1061,26 +1468,57 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
         }
 
         // 删除环境变量按钮点击事件
-        private void DeleteSecret_Click(object sender, RoutedEventArgs e)
+private void DeleteSecret_Click(object sender, RoutedEventArgs e)
+{
+    if (sender is Button btn && btn.Tag is Secret secret)
+    {
+        try
         {
-            if (sender is Button btn && btn.Tag is Secret secret)
+            // 检查是否是 Profile 的环境变量
+            if (_currentProfile?.EnvironmentVariables.Contains(secret) == true)
             {
-                try
+                _currentProfile.EnvironmentVariables.Remove(secret);
+                ProfileEnvVarsList.ItemsSource = null;
+                ProfileEnvVarsList.ItemsSource = _currentProfile.EnvironmentVariables;
+                SaveData();
+                AddLog("删除环境变量", "debug");
+                return;
+            }
+            
+            // 否则是 Secrets
+            if (_currentProfile?.Secrets.Contains(secret) == true)
+            {
+                _currentProfile.Secrets.Remove(secret);
+                SecretsList.ItemsSource = null;
+                SecretsList.ItemsSource = _currentProfile.Secrets;
+                SaveData();
+                AddLog("删除 Secret", "debug");
+                return;
+            }
+            
+            // 检查是否是模板的环境变量 - 通过 Key 匹配
+            if (_currentTemplate?.EnvironmentVariables != null)
+            {
+                var templateEnvVar = _currentTemplate.EnvironmentVariables
+                    .FirstOrDefault(ev => ev.Key == secret.Key);
+                
+                if (templateEnvVar != null)
                 {
-                    if (_currentProfile == null) return;
-                    
-                    _currentProfile.Secrets.Remove(secret);
-                    SecretsList.ItemsSource = null;
-                    SecretsList.ItemsSource = _currentProfile.Secrets;
+                    _currentTemplate.EnvironmentVariables.Remove(templateEnvVar);
+                    RefreshEnvVars();
                     SaveData();
-                    AddLog("删除环境变量", "debug");
-                }
-                catch (Exception ex)
-                {
-                    AddLog($"删除环境变量失败: {ex.Message}", "error");
+                    AddLog("删除模板环境变量", "debug");
+                    return;
                 }
             }
         }
+        catch (Exception ex)
+        {
+            AddLog($"删除变量失败: {ex.Message}", "error");
+        }
+    }
+}
+       
         
         private void RefreshAccountsList()
         {
@@ -1213,7 +1651,8 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                     WorkerNamePattern = "worker-{{region}}",
                     Variables = new List<string> { "region" },
                     Code = GetDefaultWorkerCode(),
-                    Secrets = new List<SecretTemplate>()
+                    Secrets = new List<SecretTemplate>(),
+                    EnvironmentVariables = new List<SecretTemplate>()
                 };
                 Templates.Add(template);
                 SelectTemplate(template);
@@ -1256,6 +1695,8 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                             TemplatePattern.Text = "";
                             TemplateCode.Text = "";
                             VariablesList.Items.Clear();
+                            // 清空环境变量列表
+                            EnvVarsList.ItemsSource = null;
                         }
                         
                         // 保存数据并刷新UI
@@ -1288,6 +1729,9 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                 SubscribeTemplateEditorEvents();
                 
                 RefreshVariablesList();
+                // 新增：刷新环境变量列表
+                RefreshEnvVars();
+                
                 AddLog($"已选择模板: {template.Name}", "debug");
             }
             catch (Exception ex)
@@ -1481,6 +1925,42 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
             {
                 AddLog($"刷新变量列表失败: {ex.Message}", "error");
             }
+        }
+        
+        // 新增：添加环境变量按钮点击事件
+        private void AddEnvVar_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_currentTemplate == null)
+                {
+                    MessageBox.Show("请先选择一个 Worker 模板", "提示", 
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                _currentTemplate.EnvironmentVariables.Add(new SecretTemplate 
+                { 
+                    Key = "VAR_NAME", 
+                    Value = "" 
+                });
+                RefreshEnvVars();
+                SaveData();
+                AddLog("添加环境变量到模板", "debug");
+            }
+            catch (Exception ex)
+            {
+                AddLog($"添加环境变量失败: {ex.Message}", "error");
+            }
+        }
+
+        // 新增：刷新环境变量列表显示
+        private void RefreshEnvVars()
+        {
+            if (EnvVarsList == null) return;
+            
+            EnvVarsList.ItemsSource = null;
+            EnvVarsList.ItemsSource = _currentTemplate?.EnvironmentVariables;
         }
         
         private void OpenProxyConfig_Click(object sender, RoutedEventArgs e)
@@ -1758,7 +2238,7 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
             }
         }
         
-                private async void StartMatrixDeploy_Click(object sender, RoutedEventArgs e)
+        private async void StartMatrixDeploy_Click(object sender, RoutedEventArgs e)
         {
             var items = DeployMatrix.Where(i => i.Selected).ToList();
             if (!items.Any()) return;
@@ -1808,7 +2288,20 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                             }
                         }
 
-                        await DeployToCloudflare(item.AccountId, item.ApiToken, item.WorkerName, code, secrets);
+                        // 准备环境变量（支持变量替换）
+                        var envVars = new Dictionary<string, string>();
+                        if (template?.EnvironmentVariables != null)
+                        {
+                            foreach (var ev in template.EnvironmentVariables)
+                            {
+                                if (!string.IsNullOrEmpty(ev.Key))
+                                {
+                                    envVars[ev.Key] = ReplaceVars(ev.Value, item.Variables);
+                                }
+                            }
+                        }
+
+                        await DeployToCloudflare(item.AccountId, item.ApiToken, item.WorkerName, code, secrets, envVars);
 
                         await Dispatcher.InvokeAsync(() =>
                         {
@@ -1878,10 +2371,13 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
             {
                 var secrets = profile.Secrets?.ToDictionary(s => s.Key, s => s.Value) ?? new Dictionary<string, string>();
                 
+                // Profile 环境变量
+                var envVars = profile.EnvironmentVariables?.ToDictionary(s => s.Key, s => s.Value) ?? new Dictionary<string, string>();
+                
                 await Task.Run(async () =>
                 {
                     await DeployToCloudflareInternal(profile.AccountId, profile.ApiToken, profile.WorkerName, 
-                        profile.Code ?? GetDefaultWorkerCode(), secrets);
+                        profile.Code ?? GetDefaultWorkerCode(), secrets, envVars);
                 });
 
                 AddLog($"✅ {profile.WorkerName} 部署成功", "success");
@@ -1899,8 +2395,8 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
             }
         }
 
-                    private async Task DeployToCloudflareInternal(string accountId, string apiToken, string workerName, 
-            string script, Dictionary<string, string> secrets)
+        private async Task DeployToCloudflareInternal(string accountId, string apiToken, string workerName, 
+            string script, Dictionary<string, string> secrets, Dictionary<string, string> environmentVariables)
         {
             IWebProxy? proxy = null;
             
@@ -1974,6 +2470,7 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                 workerName,
                 script,
                 secrets,
+                environmentVariables,
                 routes = new List<object>(),
                 subdomain = false
             };
@@ -2038,7 +2535,7 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
         }
 
         private async Task DeployToCloudflare(string accountId, string apiToken, string workerName, 
-            string script, Dictionary<string, string> secrets)
+            string script, Dictionary<string, string> secrets, Dictionary<string, string> environmentVariables)
         {
             IWebProxy? proxy = null;
             
@@ -2117,6 +2614,7 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
                 workerName,
                 script,
                 secrets,
+                environmentVariables,
                 routes = new List<object>(),
                 subdomain = false
             };
@@ -2286,7 +2784,7 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
         }
     }
 
-    public class DeployResponse
+        public class DeployResponse
     {
         public bool Success { get; set; }
         public string? Error { get; set; }
@@ -2298,5 +2796,71 @@ private async void DeployCurrent_Click(object sender, RoutedEventArgs e)
     {
         public int Code { get; set; }
         public string? Message { get; set; }
+    }
+
+    // Worker代码分析器
+    public class WorkerCodeAnalyzer
+    {
+        public class AnalysisResult
+        {
+            public int TotalLines { get; set; }
+            public int CodeLines { get; set; }
+            public int CommentLines { get; set; }
+            public int EmptyLines { get; set; }
+            public List<string> DetectedPatterns { get; set; } = new();
+            public List<string> Suggestions { get; set; } = new();
+            public string Complexity { get; set; } = "简单";
+        }
+
+        public static AnalysisResult Analyze(string code)
+        {
+            var result = new AnalysisResult();
+            if (string.IsNullOrWhiteSpace(code))
+                return result;
+
+            var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            result.TotalLines = lines.Length;
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed))
+                    result.EmptyLines++;
+                else if (trimmed.StartsWith("//") || trimmed.StartsWith("/*") || trimmed.StartsWith("*"))
+                    result.CommentLines++;
+                else
+                    result.CodeLines++;
+            }
+
+            // 检测常用模式
+            if (code.Contains("export default"))
+                result.DetectedPatterns.Add("ES Module 导出");
+            if (code.Contains("async fetch"))
+                result.DetectedPatterns.Add("Fetch 事件处理器");
+            if (code.Contains("addEventListener"))
+                result.DetectedPatterns.Add("事件监听器模式");
+            if (code.Contains("new Response"))
+                result.DetectedPatterns.Add("HTTP 响应构造");
+            if (code.Contains("env."))
+                result.DetectedPatterns.Add("环境变量访问");
+            if (code.Contains("cors") || code.Contains("CORS"))
+                result.DetectedPatterns.Add("CORS 处理");
+
+            // 复杂度评估
+            var bracketCount = code.Count(c => c == '{' || c == '}');
+            if (bracketCount > 20) result.Complexity = "复杂";
+            else if (bracketCount > 10) result.Complexity = "中等";
+            else result.Complexity = "简单";
+
+            // 建议
+            if (!code.Contains("try") && code.Contains("await"))
+                result.Suggestions.Add("建议：异步操作添加 try-catch 错误处理");
+            if (!code.Contains("console.log") && result.CodeLines > 20)
+                result.Suggestions.Add("提示：可添加日志输出便于调试");
+            if (!result.DetectedPatterns.Any(p => p.Contains("CORS")) && code.Contains("fetch"))
+                result.Suggestions.Add("建议：跨域请求可能需要 CORS 处理");
+
+            return result;
+        }
     }
 }

@@ -96,7 +96,10 @@ namespace CFDeployer
                         Secrets = profile.Secrets?.ToDictionary(s => s.Key, s => s.Value)
                                   ?? new Dictionary<string, string>(),
                         Routes = profile.Routes ?? new List<Route>(),
-                        Subdomain = !string.IsNullOrEmpty(profile.Subdomain)
+                        Subdomain = !string.IsNullOrEmpty(profile.Subdomain),
+                        // 新增：传递环境变量
+                        EnvironmentVariables = profile.EnvironmentVariables?.ToDictionary(s => s.Key, s => s.Value)
+                                  ?? new Dictionary<string, string>()
                     };
 
                     // 执行部署（ConfigureAwait(false) 确保不尝试回到原上下文）
@@ -179,7 +182,12 @@ namespace CFDeployer
                             s => ReplaceVars(s.Value, item.Variables)
                         ) ?? new Dictionary<string, string>(),
                         Routes = new List<Route>(),
-                        Subdomain = false
+                        Subdomain = false,
+                        // 新增：传递环境变量（模板变量 + 矩阵项变量）
+                        EnvironmentVariables = template.EnvironmentVariables?.ToDictionary(
+                            s => s.Key,
+                            s => ReplaceVars(s.Value, item.Variables)
+                        ) ?? new Dictionary<string, string>()
                     }).ToList();
 
                     var completed = 0;

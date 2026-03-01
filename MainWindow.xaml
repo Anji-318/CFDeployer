@@ -625,6 +625,71 @@
             <Setter Property="Margin" Value="0,0,0,12"/>
         </Style>
 
+                <!-- 代码工具按钮样式 -->
+        <Style x:Key="CodeToolButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource BgCard}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Border}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 代码工具按钮选中样式（绿色渐变橘色） -->
+        <Style x:Key="CodeToolButtonActive" TargetType="Button">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#10B981" Offset="0"/>
+                        <GradientStop Color="#F59E0B" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
    
     <Grid>
@@ -664,10 +729,21 @@
                                    VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Cloudflare Deployer"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   FontSize="24"
-                                   FontWeight="Bold"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                            <TextBlock Text="Cloudflare Deployer"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontSize="24"
+                                       FontWeight="Bold"/>
+                            <TextBlock x:Name="VersionText"
+                                       Text="版本v1.0.1"
+                                       Foreground="{DynamicResource TextMuted}"
+                                       FontSize="11"
+                                       Margin="6,0,0,3"
+                                       VerticalAlignment="Bottom"
+                                       Cursor="Hand"
+                                       MouseLeftButtonDown="VersionText_Click"
+                                       ToolTip="点击查看关于"/>
+                        </StackPanel>
                         <TextBlock Text="多账户批量部署系统 | 矩阵部署 | 代理中转"
                                    Foreground="{DynamicResource TextSecondary}"
                                    FontSize="14"
@@ -891,7 +967,7 @@
                                     </StackPanel>
                                 </Grid>
                                
-                                <!-- 环境变量区域 - 直接展开，移除折叠 -->
+                                <!-- Secrets 加密变量区域 -->
 <Border Background="{DynamicResource BgCard}"
         BorderBrush="{DynamicResource Border}"
         BorderThickness="1"
@@ -899,32 +975,112 @@
         Padding="12"
         Margin="0,16,0,0">
     <StackPanel>
-        <TextBlock Text="🔐 环境变量"
+        <TextBlock Text="🔐 Secrets (加密变量)"
                    Foreground="{DynamicResource TextPrimary}"
                    FontWeight="SemiBold"
                    Margin="0,0,0,12"/>
         <ItemsControl x:Name="SecretsList"
                       ItemTemplate="{StaticResource SecretItemTemplate}"/>
-        <Button Content="+ 添加环境变量"
+        <Button Content="+ 添加 Secret"
                 Style="{StaticResource SecondaryButton}"
                 HorizontalAlignment="Stretch"
                 Margin="0,8,0,0"
                 Click="AddSecret_Click"/>
     </StackPanel>
 </Border>
+
+<!-- 环境变量区域 (明文) -->
+<Border Background="{DynamicResource BgCard}"
+        BorderBrush="{DynamicResource Border}"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="12"
+        Margin="0,16,0,0">
+    <StackPanel>
+        <Grid Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="🌍 环境变量 (明文)"
+                       Foreground="{DynamicResource TextPrimary}"
+                       FontWeight="SemiBold"/>
+            <Button Grid.Column="1"
+                    Content="+ 添加"
+                    Style="{StaticResource PrimaryButton}"
+                    Click="AddProfileEnvVar_Click"/>
+        </Grid>
+        <ItemsControl x:Name="ProfileEnvVarsList"
+                      ItemTemplate="{StaticResource SecretItemTemplate}"/>
+        <TextBlock Foreground="{DynamicResource TextMuted}"
+                   FontSize="11"
+                   Margin="0,8,0,0"
+                   Text="提示：环境变量以明文形式存储，适用于非敏感配置"/>
+    </StackPanel>
+</Border>
+
                                
-                                <TextBlock Text="Worker 代码"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="12"
-                                           Margin="0,16,0,6"/>
-                                <TextBox x:Name="ProfileCode"
-                                         Style="{StaticResource ModernTextBox}"
-                                         AcceptsReturn="True"
-                                         AcceptsTab="True"
-                                         FontFamily="Consolas"
-                                         Height="300"
-                                         VerticalScrollBarVisibility="Auto"
-                                         HorizontalScrollBarVisibility="Auto"/>
+                                <!-- Worker 代码区域 - 带功能按钮 -->
+                                <Grid Margin="0,16,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <!-- 标题栏 + 功能按钮 -->
+                                    <Grid Background="{DynamicResource BgInput}" 
+                                          Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Worker 代码"
+                                                   Foreground="{DynamicResource TextSecondary}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   Margin="12,0,10,0"/>
+                                        
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,5,5,5">
+                                            <Button x:Name="ProfileAnalyzeBtn"
+                                                    Content="🔍 分析" 
+                                                    Click="ProfileAnalyzeBtn_Click"
+                                                    Style="{StaticResource CodeToolButtonActive}"/>
+                                            
+                                            <Button x:Name="ProfileDecodeBtn"
+                                                    Content="🔓 解码 ▼" 
+                                                    Click="ProfileDecodeBtn_Click"
+                                                    Style="{StaticResource CodeToolButton}"/>
+                                            
+                                            <Button x:Name="ProfileObfuscateBtn"
+                                                    Content="🔒 混淆 ▼" 
+                                                    Click="ProfileObfuscateBtn_Click"
+                                                    Style="{StaticResource CodeToolButton}"/>
+                                            
+                                            <Button x:Name="ProfileFormatBtn"
+                                                    Content="📝 格式 ▼" 
+                                                    Click="ProfileFormatBtn_Click"
+                                                    Style="{StaticResource CodeToolButton}"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    
+                                    <!-- 代码编辑器 -->
+                                    <TextBox x:Name="ProfileCode"
+                                             Grid.Row="1"
+                                             Style="{StaticResource ModernTextBox}"
+                                             AcceptsReturn="True"
+                                             AcceptsTab="True"
+                                             FontFamily="Consolas"
+                                             Height="300"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             TextChanged="ProfileCode_TextChanged"/>
+                                </Grid>
                             </StackPanel>
                         </ScrollViewer>
                        
@@ -1073,69 +1229,144 @@
                 </Border>
                
                 <!-- 右侧：模板编辑器 -->
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0"
-                                   Text="✏️ 编辑模板"
-                                   Foreground="{DynamicResource TextPrimary}"
-                                   FontWeight="SemiBold"
-                                   FontSize="16"
-                                   Margin="0,0,0,16"/>
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <StackPanel>
-                                <TextBlock Text="模板名称"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="12"
-                                           Margin="0,0,0,6"/>
-                                <TextBox x:Name="TemplateName"
-                                         Style="{StaticResource ModernTextBox}"
-                                         Margin="0,0,0,16"/>
-                               
-                                <TextBlock Text="Worker 名称模式 (可用变量: region, id等)"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="12"
-                                           Margin="0,0,0,6"/>
-                                <TextBox x:Name="TemplatePattern"
-                                         Style="{StaticResource ModernTextBox}"
-                                         Margin="0,0,0,16"/>
-                               
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               Text="变量定义"
-                                               Foreground="{DynamicResource TextPrimary}"
-                                               FontWeight="SemiBold"/>
-                                    <Button Grid.Column="1"
-                                            Content="+ 添加变量"
-                                            Style="{StaticResource PrimaryButton}"
-                                            Click="AddVariable_Click"/>
-                                </Grid>
-                                <ItemsControl x:Name="VariablesList" Margin="0,0,0,16"/>
-                               
-                                <TextBlock Text="代码模板"
-                                           Foreground="{DynamicResource TextSecondary}"
-                                           FontSize="12"
-                                           Margin="0,0,0,6"/>
-                                <TextBox x:Name="TemplateCode"
-         Style="{StaticResource ModernTextBox}"
-         AcceptsReturn="True"
-         AcceptsTab="True"
-         FontFamily="Consolas"
-         Height="300"
-         VerticalScrollBarVisibility="Auto"
-         TextChanged="TemplateCode_TextChanged"/>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Grid>
+<Border Grid.Column="1" Style="{StaticResource CardStyle}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0"
+                   Text="✏️ 编辑模板"
+                   Foreground="{DynamicResource TextPrimary}"
+                   FontWeight="SemiBold"
+                   FontSize="16"
+                   Margin="0,0,0,16"/>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="模板名称"
+                           Foreground="{DynamicResource TextSecondary}"
+                           FontSize="12"
+                           Margin="0,0,0,6"/>
+                <TextBox x:Name="TemplateName"
+                         Style="{StaticResource ModernTextBox}"
+                         Margin="0,0,0,16"/>
+               
+                <TextBlock Text="Worker 名称模式 (可用变量: region, id等)"
+                           Foreground="{DynamicResource TextSecondary}"
+                           FontSize="12"
+                           Margin="0,0,0,6"/>
+                <TextBox x:Name="TemplatePattern"
+                         Style="{StaticResource ModernTextBox}"
+                         Margin="0,0,0,16"/>
+               
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="变量定义"
+                               Foreground="{DynamicResource TextPrimary}"
+                               FontWeight="SemiBold"/>
+                    <Button Grid.Column="1"
+                            Content="+ 添加变量"
+                            Style="{StaticResource PrimaryButton}"
+                            Click="AddVariable_Click"/>
+                </Grid>
+                <ItemsControl x:Name="VariablesList" Margin="0,0,0,16"/>
+               
+                <!-- 环境变量区域 -->
+                <Border Background="{DynamicResource BgCard}"
+                        BorderBrush="{DynamicResource Border}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,0,0,16">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="🌍 环境变量"
+                                       Foreground="{DynamicResource TextPrimary}"
+                                       FontWeight="SemiBold"/>
+                            <Button Grid.Column="1"
+                                    Content="+ 添加"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Click="AddEnvVar_Click"/>
+                        </Grid>
+                        <ItemsControl x:Name="EnvVarsList" ItemTemplate="{StaticResource SecretItemTemplate}"/>
+                    </StackPanel>
                 </Border>
-            </Grid>
+               
+                <!-- Worker 代码区域 - 带功能按钮（模板页面） -->
+                <Grid Margin="0,0,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- 标题栏 + 功能按钮 -->
+                    <Grid Background="{DynamicResource BgInput}" 
+                          Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0"
+                                   Text="worker 模板"
+                                   Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,10,0"/>
+                        
+                        <StackPanel Grid.Column="1" 
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,5,5,5">
+                            <Button x:Name="TemplateAnalyzeBtn"
+                                    Content="🔍 分析" 
+                                    Click="TemplateAnalyzeBtn_Click"
+                                    Style="{StaticResource CodeToolButtonActive}"/>
+                            
+                            <Button x:Name="TemplateDecodeBtn"
+                                    Content="🔓 解码 ▼" 
+                                    Click="TemplateDecodeBtn_Click"
+                                    Style="{StaticResource CodeToolButton}"/>
+                            
+                            <Button x:Name="TemplateObfuscateBtn"
+                                    Content="🔒 混淆 ▼" 
+                                    Click="TemplateObfuscateBtn_Click"
+                                    Style="{StaticResource CodeToolButton}"/>
+                            
+                            <Button x:Name="TemplateFormatBtn"
+                                    Content="📝 格式 ▼" 
+                                    Click="TemplateFormatBtn_Click"
+                                    Style="{StaticResource CodeToolButton}"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <!-- 代码编辑器 -->
+                    <TextBox x:Name="TemplateCode"
+                             Grid.Row="1"
+                             Style="{StaticResource ModernTextBox}"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             FontFamily="Consolas"
+                             Height="300"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto"
+                             TextChanged="TemplateCode_TextChanged"/>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Border>
+</Grid>
+
            
             <!-- 部署矩阵标签页 -->
             <Grid x:Name="PageDeploy" Visibility="Collapsed">
@@ -1314,14 +1545,14 @@
                                             Style="{StaticResource SecondaryButton}"
                                             Click="ClearLogs_Click"/>
                                 </Grid>
-                               
                                 <!-- 日志筛选按钮 -->
 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
     <RadioButton GroupName="LogFilterGroup"
                  Content="全部"
                  Style="{StaticResource LogFilterButton}"
                  Click="FilterLogs_Click"
-                 Tag="all"/>
+                 Tag="all"
+                 IsChecked="True"/>
     <RadioButton GroupName="LogFilterGroup"
                  Content="信息"
                  Style="{StaticResource LogFilterButton}"
