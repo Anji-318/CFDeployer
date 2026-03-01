@@ -4,6 +4,8 @@
              xmlns:local="clr-namespace:CFDeployer"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
+        <!-- 关键：强制 ScrollViewer 右下角角落透明 -->
+        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
         <!-- 动态颜色资源 - 这些会在代码中被动态修改 -->
         <SolidColorBrush x:Key="BgDark" Color="#0f172a"/>
         <SolidColorBrush x:Key="BgCard" Color="#1e293b"/>
@@ -535,45 +537,9 @@
             </Border>
         </DataTemplate>
         
-        <!-- 绿色圆角滚动条样式 -->
-        <Style x:Key="GreenScrollBarStyle" TargetType="ScrollBar">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Width" Value="8"/>
-            <Setter Property="MinWidth" Value="8"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid x:Name="Root" Background="{TemplateBinding Background}">
-                            <Track x:Name="PART_Track" 
-                                   IsDirectionReversed="true" 
-                                   IsEnabled="{TemplateBinding IsMouseOver}">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{StaticResource Success}" 
-                                                        CornerRadius="4"
-                                                        Width="6"
-                                                        HorizontalAlignment="Center"
-                                                        Opacity="0.9"
-                                                        UseLayoutRounding="True"
-                                                        SnapsToDevicePixels="True"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        
-        <!-- 全局滚动条样式 -->
+        <!-- 绿色圆角滚动条样式 - 修复横向滚动条错乱和同向滚动问题 -->
         <Style TargetType="ScrollBar">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Width" Value="8"/>
-            <Setter Property="MinWidth" Value="8"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
@@ -587,8 +553,6 @@
                                             <ControlTemplate TargetType="Thumb">
                                                 <Border Background="{StaticResource Success}" 
                                                         CornerRadius="4"
-                                                        Width="6"
-                                                        HorizontalAlignment="Center"
                                                         Opacity="0.8"
                                                         UseLayoutRounding="True"
                                                         SnapsToDevicePixels="True"/>
@@ -601,41 +565,46 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        
-        <!-- 水平滚动条 -->
-        <Style TargetType="ScrollBar" x:Key="HorizontalScrollBar" BasedOn="{StaticResource {x:Type ScrollBar}}">
-            <Setter Property="Height" Value="8"/>
-            <Setter Property="MinHeight" Value="8"/>
-            <Setter Property="Width" Value="Auto"/>
-            <Setter Property="MinWidth" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ScrollBar">
-                        <Grid x:Name="Root" Background="{TemplateBinding Background}">
-                            <Track x:Name="PART_Track" 
-                                   Orientation="Horizontal"
-                                   IsEnabled="{TemplateBinding IsMouseOver}">
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="{StaticResource Success}" 
-                                                        CornerRadius="4"
-                                                        Height="6"
-                                                        VerticalAlignment="Center"
-                                                        Opacity="0.8"
-                                                        UseLayoutRounding="True"
-                                                        SnapsToDevicePixels="True"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Style.Triggers>
+                <!-- 垂直滚动条 -->
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="8"/>
+                    <Setter Property="MinWidth" Value="8"/>
+                </Trigger>
+                <!-- 水平滚动条 - 关键修复：使用独立 Template -->
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="8"/>
+                    <Setter Property="MinHeight" Value="8"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ScrollBar">
+                                <Grid x:Name="Root" Background="{TemplateBinding Background}">
+                                    <Track x:Name="PART_Track" 
+                                           Orientation="Horizontal"
+                                           IsDirectionReversed="false" 
+                                           IsEnabled="{TemplateBinding IsMouseOver}">
+                                        <Track.Thumb>
+                                            <Thumb>
+                                                <Thumb.Template>
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Border Background="{StaticResource Success}" 
+                                                                CornerRadius="4"
+                                                                Height="6"
+                                                                VerticalAlignment="Center"
+                                                                Opacity="0.8"
+                                                                UseLayoutRounding="True"
+                                                                SnapsToDevicePixels="True"/>
+                                                    </ControlTemplate>
+                                                </Thumb.Template>
+                                            </Thumb>
+                                        </Track.Thumb>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Application.Resources>
 </Application>

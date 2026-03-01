@@ -226,17 +226,21 @@
     </Setter>
 </Style>
        
-        <!-- 现代文本框样式 -->
-        <Style x:Key="ModernTextBox" TargetType="TextBox">
+        <!-- 代码编辑器专用样式 - 修复滚动条错乱和白色方块问题 -->
+        <Style x:Key="CodeEditorTextBox" TargetType="TextBox">
             <Setter Property="Background" Value="{DynamicResource InputBackground}"/>
             <Setter Property="Foreground" Value="{DynamicResource InputForeground}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Border}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
             <Setter Property="CaretBrush" Value="{DynamicResource InputForeground}"/>
             <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Hidden"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="AcceptsTab" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -245,7 +249,11 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8"
                                 Padding="{TemplateBinding Padding}">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}" VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"/>
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                          Focusable="false"
+                                          Background="Transparent"
+                                          HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
+                                          VerticalScrollBarVisibility="{TemplateBinding VerticalScrollBarVisibility}"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -1069,16 +1077,11 @@
                                         </StackPanel>
                                     </Grid>
                                     
-                                    <!-- 代码编辑器 -->
+                                     <!-- 代码编辑器 -->
                                     <TextBox x:Name="ProfileCode"
                                              Grid.Row="1"
-                                             Style="{StaticResource ModernTextBox}"
-                                             AcceptsReturn="True"
-                                             AcceptsTab="True"
-                                             FontFamily="Consolas"
+                                             Style="{StaticResource CodeEditorTextBox}"
                                              Height="300"
-                                             VerticalScrollBarVisibility="Auto"
-                                             HorizontalScrollBarVisibility="Auto"
                                              TextChanged="ProfileCode_TextChanged"/>
                                 </Grid>
                             </StackPanel>
