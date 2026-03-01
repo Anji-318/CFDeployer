@@ -11,6 +11,9 @@ namespace CFDeployer.Models
         public string Code { get; set; } = "";
         public List<SecretTemplate> Secrets { get; set; } = new();
         
+        // 环境变量（复用 SecretTemplate 结构）
+        public List<SecretTemplate> EnvironmentVariables { get; set; } = new();
+        
         public string VariablesDisplay => string.Join(", ", Variables);
     }
     

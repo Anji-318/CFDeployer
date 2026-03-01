@@ -14,6 +14,9 @@ namespace CFDeployer.Models
         public List<Route> Routes { get; set; } = new();
         public string? Code { get; set; }
         
+        // 环境变量（明文存储，适用于非敏感配置）
+        public List<Secret> EnvironmentVariables { get; set; } = new();
+        
         public string DisplayInfo => $"{WorkerName ?? "未设置"} | {(AccountId?.Length > 8 ? AccountId[..8] + "..." : AccountId ?? "无账户")}";
     }
     

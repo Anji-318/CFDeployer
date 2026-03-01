@@ -3,9 +3,6 @@ using System.ComponentModel;
 
 namespace CFDeployer.Models
 {
-    /// <summary>
-    /// 单个部署任务
-    /// </summary>
     public class DeployJob
     {
         public string AccountId { get; set; } = "";
@@ -15,11 +12,11 @@ namespace CFDeployer.Models
         public Dictionary<string, string> Secrets { get; set; } = new();
         public List<Route> Routes { get; set; } = new();
         public bool Subdomain { get; set; }
+        
+        // 环境变量（明文存储）
+        public Dictionary<string, string> EnvironmentVariables { get; set; } = new();
     }
     
-    /// <summary>
-    /// 部署矩阵项（支持数据绑定）
-    /// </summary>
     public class DeployMatrixItem : INotifyPropertyChanged
     {
         private bool _selected = true;
@@ -31,6 +28,9 @@ namespace CFDeployer.Models
         public string ApiToken { get; set; } = "";
         public string WorkerName { get; set; } = "";
         public Dictionary<string, string> Variables { get; set; } = new();
+        
+        // 环境变量（用于矩阵部署时传递自定义环境变量）
+        public Dictionary<string, string> EnvironmentVariables { get; set; } = new();
 
         public bool Selected
         {
