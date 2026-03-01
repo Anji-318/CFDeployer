@@ -78,6 +78,7 @@ namespace CFDeployer.Services
                 workerName = job.WorkerName,
                 script = job.Script,
                 secrets = job.Secrets ?? new Dictionary<string, string>(),
+                environmentVariables = job.EnvironmentVariables ?? new Dictionary<string, string>(),
                 routes = job.Routes ?? new List<Route>(),
                 subdomain = job.Subdomain
             };
