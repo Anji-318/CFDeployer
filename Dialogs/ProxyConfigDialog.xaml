@@ -8,27 +8,27 @@
         ResizeMode="NoResize">
     
     <Window.Resources>
-    <!-- 复用 App.xaml 中已定义的样式，不再重复定义颜色资源 -->
-    
-    <Style x:Key="DialogTextBox" TargetType="TextBox" BasedOn="{StaticResource ModernTextBox}">
-        <Setter Property="MinHeight" Value="45"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="TextWrapping" Value="NoWrap"/>
-        <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
-    </Style>
-    
-    <Style x:Key="DialogPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource ModernPasswordBox}">
-        <Setter Property="MinHeight" Value="45"/>
-        <Setter Property="Padding" Value="12,10"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-    
-    <Style x:Key="DialogSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-        <Setter Property="Width" Value="45"/>
-        <Setter Property="Height" Value="45"/>
-    </Style>
-</Window.Resources>
+        <!-- 复用 App.xaml 中已定义的样式，不再重复定义颜色资源 -->
+        
+        <Style x:Key="DialogTextBox" TargetType="TextBox" BasedOn="{StaticResource ModernTextBox}">
+            <Setter Property="MinHeight" Value="45"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+        
+        <Style x:Key="DialogPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource ModernPasswordBox}">
+            <Setter Property="MinHeight" Value="45"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        
+        <Style x:Key="DialogSecondaryButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="Width" Value="45"/>
+            <Setter Property="Height" Value="45"/>
+        </Style>
+    </Window.Resources>
     
     <Border Background="{DynamicResource BgCard}" Margin="20" CornerRadius="12" Padding="24">
         <Grid>
