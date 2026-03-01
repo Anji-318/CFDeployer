@@ -5,6 +5,9 @@ on:
     tags: ['v*']  # 推送 v 开头标签时触发
   workflow_dispatch:  # 支持手动触发
 
+permissions:
+  contents: write  # 显式赋予写入权限，确保可以覆盖 Release
+
 jobs:
   build:
     runs-on: windows-latest
@@ -24,18 +27,23 @@ jobs:
       - name: Zip
         run: Compress-Archive -Path ./publish/* -DestinationPath CFDeployer.zip
       
-      # 上传到 Artifacts（临时）
+      # 上传到 Artifacts（临时存档）
       - uses: actions/upload-artifact@v4
         with:
           name: CFDeployer
           path: CFDeployer.zip
       
-      # 自动发布到 GitHub Release（永久，免登录下载）
+      # 自动发布或更新到 GitHub Release
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/v')
+        # 修改点 1：允许标签触发 OR 手动触发
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         with:
+          # 修改点 2：如果是手动触发，强制指向 v1.0.1 标签
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v1.0.1' }}
           files: CFDeployer.zip
           generate_release_notes: true
+          # 修改点 3：开启覆盖模式，如果文件已存在则替换
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
