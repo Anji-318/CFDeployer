@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Deployer v1.1.0 使用说明</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+        header h1 {
+            margin: 0 0 10px;
+            font-size: 2.4em;
+            background: linear-gradient(90deg, var(--accent), var(--warning));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header .version {
+            color: var(--muted);
+            font-size: 1.1em;
+        }
+        h2 {
+            color: var(--accent);
+            margin-top: 48px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+        h3 {
+            color: var(--warning);
+            margin-top: 32px;
+        }
+        h4 {
+            color: var(--primary);
+            margin-top: 24px;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .tip {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 12px 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        code {
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            color: #38bdf8;
+        }
+        pre {
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+        pre code {
+            background: transparent;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+        }
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        ul, ol {
+            padding-left: 24px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .nav {
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            margin-bottom: 20px;
+            z-index: 100;
+        }
+        .nav-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .nav a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .nav a:hover {
+            color: var(--text);
+            background: var(--card);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-green { background: rgba(16, 185, 129, 0.2); color: var(--accent); }
+        .badge-blue { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+        .badge-orange { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#overview">概述</a>
+            <a href="#install">安装</a>
+            <a href="#proxy">代理配置</a>
+            <a href="#worker">Worker 部署</a>
+            <a href="#pages">Pages 部署</a>
+            <a href="#matrix">矩阵部署</a>
+            <a href="#code">代码处理</a>
+            <a href="#data">数据管理</a>
+            <a href="#troubleshoot">常见问题</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>☁️ Cloudflare Deployer</h1>
+            <div class="version">使用说明 · 版本 v1.1.0</div>
+        </header>
+
+        <section id="overview">
+            <h2>📖 概述</h2>
+            <p>Cloudflare Deployer 是一款面向 Windows 的 WPF 桌面应用，用于批量部署 Cloudflare Worker 和 Cloudflare Pages 项目。</p>
+            
+            <div class="card">
+                <h3>核心功能</h3>
+                <ul>
+                    <li><strong>独立配置管理</strong>：保存多个 Worker / Pages 部署配置</li>
+                    <li><strong>账户组管理</strong>：批量管理多个 Cloudflare 账号</li>
+                    <li><strong>Worker 模板</strong>：支持变量替换的 Worker 代码模板</li>
+                    <li><strong>部署矩阵</strong>：账户 × 变量的组合批量部署</li>
+                    <li><strong>Cloudflare Pages 部署</strong>：直连 api.cloudflare.com，无需代理</li>
+                    <li><strong>代码处理工具</strong>：分析、Base64/Unicode/Hex 编解码、混淆、格式化</li>
+                    <li><strong>代理中转</strong>：Worker 部署可通过自建的 Cloudflare Worker 代理绕过 CORS</li>
+                </ul>
+            </div>
+
+            <div class="tip">
+                <strong>部署目标对比</strong>
+                <table>
+                    <tr>
+                        <th>特性</th>
+                        <th>Worker 部署</th>
+                        <th>Pages 部署</th>
+                    </tr>
+                    <tr>
+                        <td>是否需要代理</td>
+                        <td>✅ 必须</td>
+                        <td>❌ 不需要</td>
+                    </tr>
+                    <tr>
+                        <td>API 端点</td>
+                        <td>自建代理 Worker</td>
+                        <td>api.cloudflare.com</td>
+                    </tr>
+                    <tr>
+                        <td>批量并发建议</td>
+                        <td>3</td>
+                        <td>1-2</td>
+                    </tr>
+                    <tr>
+                        <td>部署间隔</td>
+                        <td>无</td>
+                        <td>≥ 1 秒</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <section id="install">
+            <h2>🚀 安装与运行</h2>
+            
+            <h3>环境要求</h3>
+            <ul>
+                <li>Windows 10 / Windows 11</li>
+                <li>.NET 8.0 SDK 或更高版本</li>
+            </ul>
+
+            <h3>编译运行</h3>
+            <pre><code># 进入项目目录
+cd CFDeployer
+
+# 编译
+dotnet build
+
+# 运行
+dotnet run
+
+# 发布单文件（可选）
+dotnet publish -c Release</code></pre>
+
+            <div class="warning">
+                <strong>注意</strong>：项目 <code>global.json</code> 默认要求 .NET 8 SDK。如果本地只安装了 .NET 9 SDK，可将 <code>rollForward</code> 改为 <code>latestMajor</code>。
+            </div>
+        </section>
+
+        <section id="proxy">
+            <h2>🌐 代理配置（Worker 部署必需）</h2>
+            
+            <p>由于 Cloudflare Worker 部署 API 使用 multipart/form-data，在 WPF 桌面应用中直接调用会受 CORS 限制，因此 Worker 部署必须通过一个中间代理 Worker 转发。</p>
+
+            <h3>配置步骤</h3>
+            <ol>
+                <li>在 Cloudflare 上创建一个代理 Worker，暴露 <code>/deploy/single</code> 端点</li>
+                <li>代理 Worker 将请求转发到 <code>https://api.cloudflare.com/client/v4/accounts/{account_id}/workers/scripts/{worker_name}</code></li>
+                <li>打开 Cloudflare Deployer，点击顶部代理状态按钮</li>
+                <li>在弹窗中填入代理 Worker URL（如 <code>https://your-proxy.your-subdomain.workers.dev</code>）</li>
+                <li>如果代理有访问密钥，填入可选的密钥</li>
+            </ol>
+
+            <div class="tip">
+                <strong>提示</strong>：Pages 部署直连 Cloudflare API，不需要配置代理。
+            </div>
+
+            <div class="danger">
+                <strong>安全提醒</strong>：API Token 当前以明文形式存储在 <code>%AppData%/CFDeployer/data.json</code> 中。请勿在公共或不安全的计算机上保存敏感 Token。
+            </div>
+        </section>
+
+        <section id="worker">
+            <h2>⚙️ Worker 部署</h2>
+            
+            <h3>1. 创建独立配置</h3>
+            <ol>
+                <li>切换到 <strong>👤 配置管理</strong> Tab</li>
+                <li>点击 <strong>+ 新建配置</strong></li>
+                <li>填写配置名称、Account ID、API Token、Worker 名称</li>
+                <li>在 Worker 代码区域编辑或粘贴代码</li>
+                <li>点击 <strong>🚀 部署当前配置</strong></li>
+            </ol>
+
+            <h3>2. 配置字段说明</h3>
+            <table>
+                <tr>
+                    <th>字段</th>
+                    <th>说明</th>
+                    <th>是否必填</th>
+                </tr>
+                <tr>
+                    <td>配置名称</td>
+                    <td>本地显示名称</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>Account ID</td>
+                    <td>Cloudflare 账户 ID</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>API Token</td>
+                    <td>具有 Cloudflare Workers 编辑权限的 Token</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>Worker 名称</td>
+                    <td>目标 Worker 脚本名称</td>
+                    <td>是</td>
+                </tr>
+                <tr>
+                    <td>自定义域名</td>
+                    <td>可选，部署后绑定自定义域名</td>
+                    <td>否</td>
+                </tr>
+                <tr>
+                    <td>Secrets</td>
+                    <td>加密变量（通过 Worker 密钥管理）</td>
+                    <td>否</td>
+                </tr>
+                <tr>
+                    <td>环境变量</td>
+                    <td>明文环境变量</td>
+                    <td>否</td>
+                </tr>
+                <tr>
+                    <td>Worker 代码</td>
+                    <td>JavaScript / TypeScript Worker 代码</td>
+                    <td>是</td>
+                </tr>
+            </table>
+
+            <h3>3. API Token 权限要求</h3>
+            <p>Worker 部署需要 Token 拥有以下权限：</p>
+            <ul>
+                <li><code>Cloudflare Workers:Edit</code></li>
+                <li><code>Account:Read</code></li>
+                <li>如需自定义域名：<code>Zone:Edit</code>（对应域名区域）</li>
+            </ul>
+        </section>
+
+        <section id="pages">
+            <h2>📄 Pages 部署</h2>
+            
+            <p>Cloudflare Pages 部署通过 Direct Upload API 直连 <code>api.cloudflare.com</code>，<strong>不需要代理</strong>。</p>
+
+            <h3>1. 创建 Pages 项目</h3>
+            <ol>
+                <li>切换到 <strong>📄 Pages项目</strong> Tab</li>
+                <li>点击 <strong>+ 新建项目</strong></li>
+                <li>填写显示名称、Account ID、API Token、Cloudflare Pages 项目名</li>
+                <li>选择分支（默认 main）和部署类型</li>
+                <li>可选：填写静态文件目录，或点击右侧 <strong>浏览...</strong> 按钮选择本地文件夹</li>
+                <li>可选：填写 Worker 代码（Pages Function 模式）</li>
+                <li>点击 <strong>🚀 部署当前 Pages 项目</strong></li>
+            </ol>
+
+            <h3>2. 部署类型说明</h3>
+            <table>
+                <tr>
+                    <th>类型</th>
+                    <th>说明</th>
+                    <th>适用场景</th>
+                </tr>
+                <tr>
+                    <td>直接上传</td>
+                    <td>直接上传静态文件生成 Deployment</td>
+                    <td>纯静态网站、SPA、文档站</td>
+                </tr>
+                <tr>
+                    <td>Pages Function（含 Worker）</td>
+                    <td>上传静态文件的同时包含 <code>_worker.js</code></td>
+                    <td>需要后端逻辑的 Pages 项目</td>
+                </tr>
+            </table>
+
+            <h3>3. 静态文件目录</h3>
+            <ul>
+                <li>填写本地文件夹路径，如 <code>C:\Users\Giga\Sites\my-site</code></li>
+                <li>或点击文本框右侧的 <strong>浏览...</strong> 按钮打开文件夹选择对话框</li>
+                <li>目录中的所有文件将按相对路径上传到 Pages</li>
+                <li>如果留空，系统会上传一个默认的 <code>index.html</code></li>
+            </ul>
+
+            <h3>4. Worker 代码（Pages Function）</h3>
+            <p>选择 Pages Function 模式时，代码区域的内容将作为 <code>_worker.js</code> 上传。代码示例：</p>
+            <pre><code>export default {
+  async fetch(request, env, ctx) {
+    return new Response("Hello from Pages Function!");
+  }
+};</code></pre>
+
+            <h3>5. API Token 权限要求</h3>
+            <p>Pages 部署需要 Token 拥有以下权限：</p>
+            <ul>
+                <li><code>Cloudflare Pages:Edit</code></li>
+                <li><code>Account:Read</code></li>
+            </ul>
+        </section>
+
+        <section id="matrix">
+            <h2>🚀 矩阵批量部署</h2>
+            
+            <p>矩阵部署用于一次将同一套代码/模板部署到多个账户或多个变量组合。</p>
+
+            <h3>Worker 矩阵部署</h3>
+            <ol>
+                <li>切换到 <strong>🚀 部署矩阵</strong> Tab</li>
+                <li>选择<strong>账户组</strong></li>
+                <li>选择<strong>Worker 模板</strong></li>
+                <li>在变量配置中输入变量值，用逗号分隔，如 <code>us-east,us-west,eu-central</code></li>
+                <li>矩阵预览会显示所有 账户 × 变量 组合</li>
+                <li>点击选择要部署的任务，或点击<strong>全选</strong></li>
+                <li>点击 <strong>🚀 开始批量部署</strong></li>
+            </ol>
+
+            <h3>Pages 矩阵部署</h3>
+            <ol>
+                <li>切换到 <strong>📄 Pages项目</strong> Tab</li>
+                <li>在右侧下方的 <strong>🚀 Pages 矩阵部署</strong> 区域选择账户组</li>
+                <li>填写项目名模式，支持变量占位符，如 <code>demo-pages-{{region}}</code></li>
+                <li>在变量配置中输入变量值，用逗号分隔</li>
+                <li>矩阵预览会显示所有 账户 × 变量 组合</li>
+                <li>点击 <strong>🚀 开始批量部署</strong></li>
+            </ol>
+
+            <div class="card">
+                <h4>矩阵部署示例</h4>
+                <p><strong>场景：单账户多 Pages 项目</strong></p>
+                <ul>
+                    <li>账户组：选择包含 1 个账户的组</li>
+                    <li>项目名模式：<code>pages-{{region}}</code></li>
+                    <li>region 变量：<code>us,eu,asia</code></li>
+                    <li>生成任务：<code>pages-us</code>、<code>pages-eu</code>、<code>pages-asia</code></li>
+                </ul>
+
+                <p><strong>场景：多账户单 Pages 项目</strong></p>
+                <ul>
+                    <li>账户组：选择包含 3 个账户的组</li>
+                    <li>项目名模式：<code>demo-site</code>（无变量）</li>
+                    <li>生成任务：3 个账户都部署到 <code>demo-site</code></li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>Pages 矩阵限流保护</strong>：Pages 部署默认串行（并发=1），每个任务完成后间隔 1 秒。如果遇到 429 限流，会自动指数退避重试 3 次。大量 Pages 项目部署建议分批执行。
+            </div>
+        </section>
+
+        <section id="template">
+            <h2>📋 Worker 模板</h2>
+            
+            <p>模板用于在矩阵部署中批量生成不同名称或不同变量的 Worker。</p>
+
+            <h3>创建模板</h3>
+            <ol>
+                <li>切换到 <strong>⚙️ Worker模板</strong> Tab</li>
+                <li>点击 <strong>+ 新建模板</strong></li>
+                <li>填写模板名称</li>
+                <li>设置 Worker 名称模式，如 <code>worker-{{region}}</code></li>
+                <li>在变量定义中添加变量名，如 <code>region</code></li>
+                <li>编辑代码模板，使用 <code>{{region}}</code> 占位符</li>
+            </ol>
+
+            <h3>模板变量</h3>
+            <p>变量在代码和名称模式中均可使用：</p>
+            <pre><code>// Worker 名称模式
+worker-{{region}}
+
+// 代码中的变量
+code = code.Replace("{{region}}", "us-east");</code></pre>
+        </section>
+
+        <section id="code">
+            <h2>🛠️ 代码处理工具</h2>
+            
+            <p>在配置管理页和模板编辑页的代码区域上方，提供以下工具按钮：</p>
+
+            <table>
+                <tr>
+                    <th>按钮</th>
+                    <th>功能</th>
+                </tr>
+                <tr>
+                    <td>🔍 分析</td>
+                    <td>分析代码行数、注释数、复杂度、常用模式</td>
+                </tr>
+                <tr>
+                    <td>🔓 解码 ▼</td>
+                    <td>Base64 / Unicode / Hex 解码</td>
+                </tr>
+                <tr>
+                    <td>🔒 混淆 ▼</td>
+                    <td>Base64 编码、轻度混淆、中度混淆</td>
+                </tr>
+                <tr>
+                    <td>📝 格式 ▼</td>
+                    <td>格式化代码、压缩代码</td>
+                </tr>
+            </table>
+
+            <div class="tip">
+                <strong>注意</strong>：混淆和压缩是不可逆操作，建议在操作前先备份原始代码。
+            </div>
+        </section>
+
+        <section id="data">
+            <h2>💾 数据管理</h2>
+            
+            <h3>数据存储位置</h3>
+            <p>所有配置、账户组、模板、Pages 项目数据保存在：</p>
+            <pre><code>%AppData%/CFDeployer/data.json</code></pre>
+
+            <h3>导出配置</h3>
+            <p>点击底部状态栏的 <strong>📤 导出</strong> 按钮，可将所有数据导出为 JSON 文件备份。</p>
+
+            <h3>导入配置</h3>
+            <p>点击底部状态栏的 <strong>📥 导入</strong> 按钮，可从 JSON 文件恢复数据。</p>
+
+            <h3>重置数据</h3>
+            <p>点击底部状态栏的 <strong>🗑️ 重置</strong> 按钮，将清空所有本地数据。此操作不可恢复。</p>
+
+            <div class="danger">
+                <strong>重要</strong>：重置会删除所有配置、账户组、模板和 Pages 项目。重置前请先导出备份。
+            </div>
+        </section>
+
+        <section id="troubleshoot">
+            <h2>🔧 常见问题</h2>
+            
+            <div class="card">
+                <h4>Worker 部署提示 "代理URL未配置"</h4>
+                <p>Worker 部署必须通过代理 Worker 中转。请先在顶部代理警告栏配置代理 Worker URL。</p>
+            </div>
+
+            <div class="card">
+                <h4>Pages 部署提示 "429 Too Many Requests"</h4>
+                <p>Cloudflare Pages API 有请求频率限制。建议：</p>
+                <ul>
+                    <li>降低 Pages 矩阵部署的任务数量</li>
+                    <li>每次部署间隔已自动设为 1 秒</li>
+                    <li>大批量部署建议分批执行，每批之间休息 1-2 分钟</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>部署失败但日志显示 HTTP 错误</h4>
+                <p>请检查：</p>
+                <ul>
+                    <li>Account ID 和 API Token 是否正确</li>
+                    <li>API Token 是否拥有足够的权限</li>
+                    <li>Worker 名称 / Pages 项目名是否符合 Cloudflare 命名规则</li>
+                    <li>代理 Worker 是否正确部署（Worker 部署）</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>矩阵预览没有生成任务</h4>
+                <p>请检查：</p>
+                <ul>
+                    <li>账户组中是否添加了账户</li>
+                    <li>模板变量是否填写了值（用逗号分隔）</li>
+                    <li>Pages 项目名模式是否正确使用了 <code>{{variable}}</code> 格式</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>如何切换深色/浅色主题</h4>
+                <p>点击顶部标题栏右侧的 🌙 / ☀️ 按钮即可切换主题。</p>
+            </div>
+        </section>
+
+        <section id="changelog">
+            <h2>📝 版本更新日志</h2>
+            
+            <h3>v1.1.0</h3>
+            <ul>
+                <li>新增 Cloudflare Pages 项目部署支持</li>
+                <li>新增 Pages 矩阵批量部署</li>
+                <li>新增 Pages Direct Upload 和 Pages Function 两种部署模式</li>
+                <li>修复 <code>IsDeploying</code> 状态赋值错误</li>
+                <li>修复 Base64 编码使用 <code>atob</code> 错误（改为 <code>btoa</code>）</li>
+                <li>修复 <code>AccountId</code> 空值导致的异常</li>
+                <li>移除 <code>MainWindow</code> 中重复的部署方法，统一部署入口到 <code>DeployService</code></li>
+                <li>Pages 部署内置 429 限流保护和自动重试</li>
+            </ul>
+
+            <h3>v1.0.1</h3>
+            <ul>
+                <li>新增代码分析、解码、混淆、格式化功能</li>
+                <li>支持 Worker 模板变量替换</li>
+                <li>优化日志筛选与导出功能</li>
+            </ul>
+        </section>
+
+        <footer style="text-align: center; padding: 40px 0; color: var(--muted); border-top: 1px solid var(--border); margin-top: 60px;">
+            <p>Cloudflare Deployer v1.1.0 · 使用说明</p>
+        </footer>
+    </div>
+</body>
+</html>
