@@ -1,0 +1,20 @@
+# Build outputs
+bin/
+obj/
+publish/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+*.tmp
+*.temp
+*.bak
+*.log
