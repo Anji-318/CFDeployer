@@ -1,0 +1,68 @@
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']  # 推送标签自动触发
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '发布版本号 (例如 v1.0.1)'
+        required: true
+        default: 'v1.0.1'
+      body:
+        description: '更新日志 (留空则自动生成)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整历史以支持 Tag 强制移动
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore CFDeployer.csproj
+
+      - name: Build
+        run: dotnet build CFDeployer.csproj -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish CFDeployer.csproj -c Release -o ./publish --self-contained -r win-x64 -p:PublishSingleFile=true
+
+      - name: Zip
+        run: Compress-Archive -Path ./publish/* -DestinationPath CFDeployer.zip
+
+      # 手动触发时：强制移动远程 Tag，确保源码同步更新
+      - name: Force update tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git tag -f ${{ github.event.inputs.version }}
+          git push origin ${{ github.event.inputs.version }} --force
+        shell: bash
+
+      # 执行发布
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        with:
+          # 确定版本号：手动输入优先，否则取 Tag 名
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          # 确定日志：手动输入优先
+          body: ${{ github.event.inputs.body }}
+          # 如果 body 为空，则自动根据 commit 生成日志
+          generate_release_notes: true
+          files: CFDeployer.zip
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
