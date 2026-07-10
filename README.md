@@ -25,19 +25,21 @@ CFDeployer 提供可视化界面，支持多账号管理、代码编辑、批量
 
 ## 📸 界面预览
 
-> 截图存放在 [`png/`](https://github.com/Anji-318/CFDeployer/tree/main/png) 目录，请确保文件名与下方引用一致。
-
-### 主界面
-![主界面](./png/main.png)
-
 ### 配置管理页
-![配置管理页](./png/profiles.png)
+![配置管理页](./png/1.png)
+
+### 账户组页
+![账户组页](./png/2.png)
+
+### worker模板页
+![账户组页](./png/3.png)
 
 ### 部署矩阵页
-![部署矩阵页](./png/matrix.png)
+![worker模板页](./png/4.png)
 
 ### Pages 项目页
-![Pages 项目页](./png/pages.png)
+![Pages 项目页](./png/5.png)
+![Pages 项目页](./png/6.png)
 
 ---
 
